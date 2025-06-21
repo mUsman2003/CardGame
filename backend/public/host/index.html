@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spiral Board Game - Host</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 2rem;
+            max-width: 1200px;
+            width: 95%;
+            margin: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .room-setup {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .room-code {
+            background: #f8f9fa;
+            border: 2px dashed #6c757d;
+            border-radius: 10px;
+            padding: 1rem;
+            margin: 1rem 0;
+            font-size: 2rem;
+            font-weight: bold;
+            color: #495057;
+            letter-spacing: 3px;
+        }
+
+        .button {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 0.5rem;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .players-section {
+            margin: 2rem 0;
+        }
+
+        .players-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .player-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1rem;
+            text-align: center;
+            border-left: 4px solid;
+        }
+
+        .player-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .player-position {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .game-board {
+            display: none;
+            margin: 2rem 0;
+        }
+
+        .spiral-board {
+            width: 600px;
+            height: 600px;
+            position: relative;
+            margin: 0 auto;
+            background: radial-gradient(circle, #fff 0%, #f0f0f0 100%);
+            border-radius: 50%;
+            border: 3px solid #333;
+        }
+
+        .ring {
+            position: absolute;
+            border: 2px solid #ddd;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ring.event-ring {
+            border-color: #ff6b6b;
+            background: rgba(255, 107, 107, 0.1);
+        }
+
+        .ring-number {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .pawn {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            position: absolute;
+            transition: all 0.5s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+
+        .game-controls {
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        .current-player {
+            background: #e3f2fd;
+            border: 2px solid #2196f3;
+            border-radius: 10px;
+            padding: 1rem;
+            margin: 1rem 0;
+            text-align: center;
+        }
+
+        .card-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .card-category {
+            display: flex;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .card-category button {
+            flex: 1;
+        }
+
+        .privilege { background: linear-gradient(45deg, #4caf50, #66bb6a); }
+        .discrimination { background: linear-gradient(45deg, #f44336, #ef5350); }
+        .social-policy { background: linear-gradient(45deg, #ff9800, #ffb74d); }
+
+        .game-level {
+            margin: 1rem 0;
+        }
+
+        .level-select {
+            padding: 8px 15px;
+            border-radius: 20px;
+            border: 2px solid #ddd;
+            font-size: 1rem;
+            margin: 0 0.5rem;
+        }
+
+        .winner-announcement {
+            background: linear-gradient(45deg, #ffd700, #ffed4a);
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+            margin: 2rem 0;
+            display: none;
+        }
+
+        .winner-announcement h2 {
+            color: #333;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+                margin: 10px;
+            }
+            
+            .spiral-board {
+                width: 400px;
+                height: 400px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Spiral Board Game</h1>
+            <p>Host Control Panel</p>
+        </div>
+
+        <div id="room-setup" class="room-setup">
+            <h2>Create Game Room</h2>
+            <button id="createRoomBtn" class="button">Create New Room</button>
+            
+            <div id="roomInfo" style="display: none;">
+                <h3>Room Code</h3>
+                <div id="roomCode" class="room-code">----</div>
+                <p>Share this code with players so they can join on their phones</p>
+                
+                <div class="game-level">
+                    <label for="gameLevel">Game Level:</label>
+                    <select id="gameLevel" class="level-select">
+                        <option value="basic">Basic (Privilege/Discrimination only)</option>
+                        <option value="intermediate">Intermediate (+ Social Policies)</option>
+                        <option value="advanced">Advanced (All categories + Events)</option>
+                    </select>
+                </div>
+                
+                <button id="startGameBtn" class="button" disabled>Start Game (Need at least 2 players)</button>
+            </div>
+        </div>
+
+        <div id="players-section" class="players-section" style="display: none;">
+            <h3>Connected Players (<span id="playerCount">0</span>)</h3>
+            <div id="playersGrid" class="players-grid"></div>
+        </div>
+
+        <div id="game-board" class="game-board">
+            <div class="spiral-board" id="spiralBoard">
+                <!-- Rings will be generated by JavaScript -->
+            </div>
+        </div>
+
+        <div id="game-controls" class="game-controls" style="display: none;">
+            <div id="currentPlayer" class="current-player">
+                <h3>Current Player: <span id="currentPlayerName">-</span></h3>
+                <p>Draw a card and apply its effect</p>
+            </div>
+
+            <div class="card-section">
+                <h4>Draw Card</h4>
+                <div class="card-category">
+                    <button class="button privilege" onclick="drawCard('privilege', 3)">Privilege (+3)</button>
+                    <button class="button privilege" onclick="drawCard('privilege', 2)">Privilege (+2)</button>
+                    <button class="button privilege" onclick="drawCard('privilege', 1)">Privilege (+1)</button>
+                </div>
+                <div class="card-category">
+                    <button class="button discrimination" onclick="drawCard('discrimination', -1)">Discrimination (-1)</button>
+                    <button class="button discrimination" onclick="drawCard('discrimination', -2)">Discrimination (-2)</button>
+                    <button class="button discrimination" onclick="drawCard('discrimination', -3)">Discrimination (-3)</button>
+                </div>
+                <div class="card-category" id="socialPolicyCards" style="display: none;">
+                    <button class="button social-policy" onclick="drawCard('social-policy', 2)">Social Policy (+2)</button>
+                    <button class="button social-policy" onclick="drawCard('social-policy', 1)">Social Policy (+1)</button>
+                    <button class="button social-policy" onclick="drawCard('social-policy', -1)">Social Policy (-1)</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="winner-announcement" class="winner-announcement">
+            <h2>🏆 Game Over!</h2>
+            <p id="winnerText"></p>
+            <button class="button" onclick="location.reload()">New Game</button>
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+        let gameState = {
+            roomCode: null,
+            players: [],
+            gameStarted: false,
+            gameLevel: 'basic'
+        };
+
+        // DOM elements
+        const createRoomBtn = document.getElementById('createRoomBtn');
+        const roomInfo = document.getElementById('roomInfo');
+        const roomCodeDiv = document.getElementById('roomCode');
+        const startGameBtn = document.getElementById('startGameBtn');
+        const playersSection = document.getElementById('players-section');
+        const playersGrid = document.getElementById('playersGrid');
+        const playerCount = document.getElementById('playerCount');
+        const gameBoard = document.getElementById('game-board');
+        const gameControls = document.getElementById('game-controls');
+        const currentPlayerName = document.getElementById('currentPlayerName');
+        const winnerAnnouncement = document.getElementById('winner-announcement');
+        const winnerText = document.getElementById('winnerText');
+        const socialPolicyCards = document.getElementById('socialPolicyCards');
+
+        // Create room
+        createRoomBtn.addEventListener('click', () => {
+            socket.emit('create-room');
+        });
+
+        // Start game
+        startGameBtn.addEventListener('click', () => {
+            const level = document.getElementById('gameLevel').value;
+            socket.emit('start-game', level);
+        });
+
+        // Socket events
+        socket.on('room-created', (data) => {
+            gameState.roomCode = data.roomCode;
+            roomCodeDiv.textContent = data.roomCode;
+            roomInfo.style.display = 'block';
+            playersSection.style.display = 'block';
+            createRoomBtn.style.display = 'none';
+            createSpiralBoard();
+        });
+
+        socket.on('room-updated', (data) => {
+            gameState.players = data.players;
+            updatePlayersDisplay();
+            updateStartButton();
+        });
+
+        socket.on('game-started', (data) => {
+            gameState.gameStarted = true;
+            gameState.gameLevel = data.gameLevel;
+            gameBoard.style.display = 'block';
+            gameControls.style.display = 'block';
+            startGameBtn.style.display = 'none';
+            
+            // Show social policy cards for intermediate and advanced levels
+            if (data.gameLevel === 'intermediate' || data.gameLevel === 'advanced') {
+                socialPolicyCards.style.display = 'flex';
+            }
+            
+            updateCurrentPlayer(data.currentPlayer);
+            updatePlayerPositions();
+        });
+
+        socket.on('card-drawn', (data) => {
+            // Update player position
+            updatePlayerPositions();
+            
+            // Show event notification if player is on event ring
+            if (data.isOnEvent && gameState.gameLevel === 'advanced') {
+                alert(`${data.player.name} landed on an EVENT ring (${data.newPosition})! Apply event card.`);
+            }
+            
+            // Check for winner
+            if (data.winner) {
+                showWinner(data.winner);
+            } else {
+                updateCurrentPlayer(data.nextPlayer);
+            }
+        });
+
+        socket.on('game-ended', (data) => {
+            showWinner(data.winner);
+        });
+
+        // Functions
+        function updatePlayersDisplay() {
+            playersGrid.innerHTML = '';
+            playerCount.textContent = gameState.players.length;
+            
+            gameState.players.forEach(player => {
+                const playerCard = document.createElement('div');
+                playerCard.className = 'player-card';
+                playerCard.style.borderLeftColor = player.color;
+                playerCard.innerHTML = `
+                    <div class="player-name">${player.name}</div>
+                    <div class="player-position">Ring: ${player.position}</div>
+                `;
+                playersGrid.appendChild(playerCard);
+            });
+        }
+
+        function updateStartButton() {
+            const canStart = gameState.players.length >= 2;
+            startGameBtn.disabled = !canStart;
+            startGameBtn.textContent = canStart ? 
+                `Start Game (${gameState.players.length} players)` : 
+                'Start Game (Need at least 2 players)';
+        }
+
+        function createSpiralBoard() {
+            const board = document.getElementById('spiralBoard');
+            board.innerHTML = '';
+            
+            const boardSize = 600;
+            const center = boardSize / 2;
+            const eventRings = [5, 10, 15, 20];
+            
+            // Create rings from outer (21) to inner (1)
+            for (let ring = 21; ring >= 1; ring--) {
+                const ringElement = document.createElement('div');
+                ringElement.className = `ring ${eventRings.includes(ring) ? 'event-ring' : ''}`;
+                ringElement.id = `ring-${ring}`;
+                
+                const radius = (ring / 21) * (boardSize / 2 - 20);
+                const size = radius * 2;
+                
+                ringElement.style.width = `${size}px`;
+                ringElement.style.height = `${size}px`;
+                ringElement.style.left = `${center - radius}px`;
+                ringElement.style.top = `${center - radius}px`;
+                
+                // Add ring number
+                const ringNumber = document.createElement('div');
+                ringNumber.className = 'ring-number';
+                ringNumber.textContent = ring;
+                ringElement.appendChild(ringNumber);
+                
+                board.appendChild(ringElement);
+            }
+        }
+
+        function updatePlayerPositions() {
+            // Remove existing pawns
+            document.querySelectorAll('.pawn').forEach(pawn => pawn.remove());
+            
+            gameState.players.forEach((player, index) => {
+                const pawn = document.createElement('div');
+                pawn.className = 'pawn';
+                pawn.style.backgroundColor = player.color;
+                
+                const ring = document.getElementById(`ring-${player.position}`);
+                if (ring) {
+                    const ringRect = ring.getBoundingClientRect();
+                    const boardRect = document.getElementById('spiralBoard').getBoundingClientRect();
+                    
+                    // Position pawns around the ring
+                    const angle = (index * (360 / gameState.players.length)) * (Math.PI / 180);
+                    const ringRadius = parseFloat(ring.style.width) / 2;
+                    const pawnRadius = ringRadius - 30;
+                    
+                    const x = Math.cos(angle) * pawnRadius;
+                    const y = Math.sin(angle) * pawnRadius;
+                    
+                    pawn.style.left = `${parseFloat(ring.style.left) + parseFloat(ring.style.width)/2 + x - 10}px`;
+                    pawn.style.top = `${parseFloat(ring.style.top) + parseFloat(ring.style.height)/2 + y - 10}px`;
+                    
+                    document.getElementById('spiralBoard').appendChild(pawn);
+                }
+            });
+        }
+
+        function updateCurrentPlayer(player) {
+            if (player) {
+                currentPlayerName.textContent = player.name;
+                currentPlayerName.style.color = player.color;
+            }
+        }
+
+        function drawCard(category, steps) {
+            socket.emit('draw-card', {
+                category: category,
+                steps: steps,
+                description: `${category} card: ${steps > 0 ? '+' : ''}${steps} rings`
+            });
+        }
+
+        function showWinner(winner) {
+            winnerText.textContent = `${winner.name} has reached the center and won the game!`;
+            winnerText.style.color = winner.color;
+            winnerAnnouncement.style.display = 'block';
+            gameControls.style.display = 'none';
+        }
+    </script>
+</body>
+</html>
