@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spiral Board Game - Player</title>
+    <title>Social Spiral Game - Player</title>
     <script src="/socket.io/socket.io.js"></script>
     <style>
         * {
@@ -14,22 +14,22 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
             min-height: 100vh;
             padding: 1rem;
         }
 
         .container {
-            max-width: 400px;
+            max-width: 420px;
             margin: 0 auto;
             background: white;
             border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
             overflow: hidden;
         }
 
         .header {
-            background: linear-gradient(45deg, #667eea, #764ba2);
+            background: linear-gradient(45deg, #2c3e50, #3498db);
             color: white;
             padding: 2rem 1.5rem;
             text-align: center;
@@ -38,6 +38,11 @@
         .header h1 {
             font-size: 1.8rem;
             margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 0.95rem;
         }
 
         .content {
@@ -66,49 +71,66 @@
 
         .form-group input:focus, .form-group select:focus {
             outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
         }
 
-        .color-selector {
+        .pawn-selector {
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 0.5rem;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.8rem;
             margin-top: 0.5rem;
         }
 
-        .color-option {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            border: 3px solid #ddd;
+        .pawn-option {
+            padding: 1rem;
+            border: 2px solid #e1e5e9;
+            border-radius: 12px;
             cursor: pointer;
             transition: all 0.3s ease;
+            text-align: center;
+            background: white;
             position: relative;
         }
 
-        .color-option:hover {
-            transform: scale(1.1);
+        .pawn-option:hover {
+            border-color: #3498db;
+            background: #f8fafe;
         }
 
-        .color-option.selected {
-            border-color: #333;
-            transform: scale(1.2);
-            box-shadow: 0 0 0 2px rgba(51, 51, 51, 0.3);
+        .pawn-option.selected {
+            border-color: #2c3e50;
+            background: #ecf0f1;
+            transform: scale(1.02);
         }
 
-        .color-option.disabled {
-            opacity: 0.3;
+        .pawn-option.disabled {
+            opacity: 0.4;
             cursor: not-allowed;
+            background: #f8f9fa;
         }
 
-        .color-option.disabled:hover {
+        .pawn-option.disabled:hover {
+            border-color: #e1e5e9;
+            background: #f8f9fa;
             transform: none;
+        }
+
+        .pawn-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .pawn-label {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #333;
+            line-height: 1.2;
         }
 
         .button {
             width: 100%;
-            background: linear-gradient(45deg, #667eea, #764ba2);
+            background: linear-gradient(45deg, #2c3e50, #3498db);
             color: white;
             border: none;
             padding: 15px;
@@ -126,7 +148,7 @@
         }
 
         .button:disabled {
-            background: #ccc;
+            background: #bdc3c7;
             cursor: not-allowed;
             transform: none;
         }
@@ -174,15 +196,20 @@
         }
 
         .player-pawn {
-            width: 30px;
-            height: 30px;
+            width: 50px;
+            height: 50px;
             border-radius: 50%;
-            border: 3px solid #fff;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            border: 3px solid #2c3e50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
 
         .position-display {
-            background: linear-gradient(45deg, #667eea, #764ba2);
+            background: linear-gradient(45deg, #2c3e50, #3498db);
             color: white;
             padding: 0.5rem 1rem;
             border-radius: 20px;
@@ -204,7 +231,7 @@
             width: 40px;
             height: 40px;
             border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
+            border-top: 4px solid #3498db;
             border-radius: 50%;
             animation: spin 1s linear infinite;
             margin: 1rem auto;
@@ -216,15 +243,47 @@
         }
 
         .game-info {
-            background: #e3f2fd;
-            border-radius: 10px;
-            padding: 1rem;
+            background: #e8f4fd;
+            border-radius: 12px;
+            padding: 1.2rem;
             margin: 1rem 0;
+            border-left: 4px solid #3498db;
         }
 
         .game-info h4 {
-            color: #1976d2;
+            color: #2c3e50;
             margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .game-info p {
+            color: #34495e;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+
+        .difficulty-badge {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .difficulty-basic {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .difficulty-intermediate {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .difficulty-advanced {
+            background: #f8d7da;
+            color: #721c24;
         }
 
         .other-players {
@@ -239,33 +298,53 @@
 
         .players-list {
             display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-            justify-content: center;
+            flex-direction: column;
+            gap: 0.8rem;
         }
 
         .other-player {
-            background: #f8f9fa;
-            border-radius: 20px;
-            padding: 0.5rem 1rem;
+            background: white;
+            border-radius: 12px;
+            padding: 1rem;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            border-left: 4px solid;
+            gap: 1rem;
+            border: 2px solid #ecf0f1;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
 
         .other-player-pawn {
-            width: 20px;
-            height: 20px;
+            width: 35px;
+            height: 35px;
             border-radius: 50%;
-            border: 2px solid #fff;
+            border: 2px solid #2c3e50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            background: white;
+        }
+
+        .player-details {
+            flex: 1;
+        }
+
+        .player-name {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 0.2rem;
+        }
+
+        .player-position {
+            font-size: 0.9rem;
+            color: #7f8c8d;
         }
 
         .turn-indicator {
-            background: linear-gradient(45deg, #4caf50, #66bb6a);
+            background: linear-gradient(45deg, #27ae60, #2ecc71);
             color: white;
-            padding: 0.8rem;
-            border-radius: 10px;
+            padding: 1rem;
+            border-radius: 12px;
             text-align: center;
             font-weight: bold;
             margin: 1rem 0;
@@ -274,13 +353,28 @@
 
         @keyframes pulse {
             0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
+            50% { transform: scale(1.02); }
             100% { transform: scale(1); }
         }
 
+        .card-info {
+            background: #fff9e6;
+            border: 2px solid #f39c12;
+            border-radius: 12px;
+            padding: 1rem;
+            margin: 1rem 0;
+            text-align: center;
+        }
+
+        .card-type {
+            font-weight: bold;
+            color: #d35400;
+            margin-bottom: 0.5rem;
+        }
+
         .winner-announcement {
-            background: linear-gradient(45deg, #ffd700, #ffed4a);
-            color: #333;
+            background: linear-gradient(45deg, #f1c40f, #f39c12);
+            color: #2c3e50;
             padding: 2rem;
             border-radius: 15px;
             text-align: center;
@@ -292,6 +386,24 @@
             margin-bottom: 1rem;
         }
 
+        .reflection-prompt {
+            background: #e8f5e8;
+            border: 2px solid #27ae60;
+            border-radius: 12px;
+            padding: 1.2rem;
+            margin: 1rem 0;
+        }
+
+        .reflection-prompt h4 {
+            color: #1e8449;
+            margin-bottom: 0.8rem;
+        }
+
+        .reflection-prompt p {
+            color: #2d5016;
+            line-height: 1.5;
+        }
+
         @media (max-width: 480px) {
             .container {
                 margin: 0;
@@ -299,13 +411,12 @@
                 min-height: 100vh;
             }
             
-            .color-selector {
-                grid-template-columns: repeat(4, 1fr);
+            .pawn-selector {
+                grid-template-columns: 1fr;
             }
             
-            .color-option {
-                width: 35px;
-                height: 35px;
+            .pawn-option {
+                padding: 0.8rem;
             }
         }
     </style>
@@ -313,8 +424,8 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🎯 Spiral Board Game</h1>
-            <p>Player Interface</p>
+            <h1>🎯 Social Spiral Game</h1>
+            <p>Understanding Social Inequalities</p>
         </div>
 
         <div class="content">
@@ -331,9 +442,9 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Choose Your Pawn Color</label>
-                    <div id="colorSelector" class="color-selector">
-                        <!-- Colors will be populated by JavaScript -->
+                    <label>Choose the identity you most identify with:</label>
+                    <div id="pawnSelector" class="pawn-selector">
+                        <!-- Pawns will be populated by JavaScript -->
                     </div>
                 </div>
 
@@ -346,16 +457,16 @@
             <!-- Waiting Room -->
             <div id="waitingRoom" style="display: none;">
                 <div class="waiting-room">
-                    <h3>Joined Successfully!</h3>
+                    <h3>Successfully Joined!</h3>
                     <div class="loading-spinner"></div>
-                    <p>Waiting for host to start the game...</p>
+                    <p>Waiting for teacher to start the game...</p>
                 </div>
 
                 <div class="game-status">
                     <div class="player-info">
                         <div id="playerPawn" class="player-pawn"></div>
                         <div>
-                            <div><strong id="playerDisplayName">Player</strong></div>
+                            <div class="player-name" id="playerDisplayName">Player</div>
                             <div class="position-display">Ring: <span id="playerPosition">21</span></div>
                         </div>
                     </div>
@@ -370,22 +481,28 @@
             <!-- Game Active -->
             <div id="gameActive" style="display: none;">
                 <div class="game-info">
-                    <h4>Game in Progress</h4>
-                    <p>Follow the host's instructions and watch the main board!</p>
+                    <div id="difficultyBadge" class="difficulty-badge difficulty-basic">Basic Level</div>
+                    <h4>Game Instructions</h4>
+                    <p>Watch the main screen and move your pawn according to the card instructions. Reflect on your experiences with privilege and discrimination.</p>
                 </div>
 
                 <div class="game-status">
                     <div class="player-info">
                         <div id="gamePlayerPawn" class="player-pawn"></div>
                         <div>
-                            <div><strong id="gamePlayerName">Player</strong></div>
+                            <div class="player-name" id="gamePlayerName">Player</div>
                             <div class="position-display">Ring: <span id="gamePlayerPosition">21</span></div>
                         </div>
                     </div>
                 </div>
 
                 <div id="turnIndicator" class="turn-indicator" style="display: none;">
-                    🎯 It's your turn! The host will draw a card for you.
+                    🎯 A card is being drawn - check the main screen!
+                </div>
+
+                <div id="cardInfo" class="card-info" style="display: none;">
+                    <div class="card-type" id="cardType">Card Type</div>
+                    <p>Follow the instructions on the main screen to move your pawn.</p>
                 </div>
 
                 <div class="other-players">
@@ -396,8 +513,14 @@
 
             <!-- Winner Announcement -->
             <div id="winnerAnnouncement" class="winner-announcement" style="display: none;">
-                <h2>🏆 Game Over!</h2>
+                <h2>🏆 Game Complete!</h2>
                 <p id="winnerText"></p>
+                
+                <div class="reflection-prompt">
+                    <h4>Time for Reflection</h4>
+                    <p>Discuss with your teacher and classmates about the different positions of the pawns and what this reveals about social inequalities in our society.</p>
+                </div>
+                
                 <button class="button" onclick="location.reload()">Play Again</button>
             </div>
         </div>
@@ -408,63 +531,73 @@
         let gameState = {
             playerData: null,
             roomCode: null,
-            selectedColor: null,
+            selectedPawn: null,
             players: [],
             currentPlayer: null,
-            gameStarted: false
+            gameStarted: false,
+            gameLevel: 'basic'
         };
+
+        // Available identity pawns
+        const IDENTITY_PAWNS = [
+            { id: 'white_man', icon: '👨🏻', label: 'White Man', color: '#3498db' },
+            { id: 'white_woman', icon: '👩🏻', label: 'White Woman', color: '#e74c3c' },
+            { id: 'black_man', icon: '👨🏿', label: 'Black Man', color: '#8e44ad' },
+            { id: 'black_woman', icon: '👩🏿', label: 'Black Woman', color: '#e67e22' },
+            { id: 'lgbtiqa', icon: '🏳️‍🌈', label: 'LGBTIQA+', color: '#f39c12' },
+            { id: 'blind', icon: '🦯', label: 'Blind Person', color: '#16a085' },
+            { id: 'deaf', icon: '🤟', label: 'Deaf Person', color: '#2980b9' },
+            { id: 'disabled', icon: '♿', label: 'Physically Disabled', color: '#c0392b' },
+            { id: 'elderly', icon: '👴', label: 'Elderly Person', color: '#7f8c8d' },
+            { id: 'neutral', icon: '👤', label: 'Neutral', color: '#34495e' }
+        ];
 
         // DOM elements
         const joinForm = document.getElementById('joinForm');
         const playerNameInput = document.getElementById('playerName');
         const roomCodeInput = document.getElementById('roomCode');
-        const colorSelector = document.getElementById('colorSelector');
+        const pawnSelector = document.getElementById('pawnSelector');
         const joinBtn = document.getElementById('joinBtn');
         const statusMessage = document.getElementById('statusMessage');
         const waitingRoom = document.getElementById('waitingRoom');
         const gameActive = document.getElementById('gameActive');
         const winnerAnnouncement = document.getElementById('winnerAnnouncement');
 
-        // Available colors (same as server)
-        const PAWN_COLORS = [
-            '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8',
-            '#F7DC6F', '#BB8FCE', '#85C1E9', '#F8C471', '#82E0AA',
-            '#F1948A', '#AED6F1', '#A9CCE3', '#D7BDE2', '#A3E4D7',
-            '#FAD7A0', '#EDBB99', '#D5A6BD', '#A9DFBF', '#F9E79F',
-            '#85929E', '#CD6155', '#AF7AC5', '#5DADE2', '#58D68D',
-            '#F4D03F', '#EB984E', '#A569BD', '#5499C7', '#52C41A'
-        ];
-
-        // Initialize color selector
-        function initializeColorSelector() {
-            colorSelector.innerHTML = '';
-            PAWN_COLORS.forEach(color => {
-                const colorOption = document.createElement('div');
-                colorOption.className = 'color-option';
-                colorOption.style.backgroundColor = color;
-                colorOption.addEventListener('click', () => selectColor(color));
-                colorSelector.appendChild(colorOption);
+        // Initialize pawn selector
+        function initializePawnSelector() {
+            pawnSelector.innerHTML = '';
+            IDENTITY_PAWNS.forEach(pawn => {
+                const pawnOption = document.createElement('div');
+                pawnOption.className = 'pawn-option';
+                pawnOption.innerHTML = `
+                    <div class="pawn-icon">${pawn.icon}</div>
+                    <div class="pawn-label">${pawn.label}</div>
+                `;
+                pawnOption.addEventListener('click', () => selectPawn(pawn));
+                pawnSelector.appendChild(pawnOption);
             });
         }
 
-        // Select color
-        function selectColor(color) {
-            const colorOptions = document.querySelectorAll('.color-option');
-            colorOptions.forEach(option => {
-                option.classList.remove('selected');
-                if (option.style.backgroundColor === color) {
-                    option.classList.add('selected');
-                }
-            });
-            gameState.selectedColor = color;
-            updateJoinButton();
+        // Select pawn
+        function selectPawn(pawn) {
+            const pawnOptions = document.querySelectorAll('.pawn-option');
+            pawnOptions.forEach(option => option.classList.remove('selected'));
+            
+            const selectedOption = Array.from(pawnOptions).find(option => 
+                option.querySelector('.pawn-label').textContent === pawn.label
+            );
+            if (selectedOption && !selectedOption.classList.contains('disabled')) {
+                selectedOption.classList.add('selected');
+                gameState.selectedPawn = pawn;
+                updateJoinButton();
+            }
         }
 
         // Update join button state
         function updateJoinButton() {
             const canJoin = playerNameInput.value.trim() && 
                            roomCodeInput.value.trim() && 
-                           gameState.selectedColor;
+                           gameState.selectedPawn;
             joinBtn.disabled = !canJoin;
         }
 
@@ -479,11 +612,11 @@
             const playerName = playerNameInput.value.trim();
             const roomCode = roomCodeInput.value.trim();
             
-            if (playerName && roomCode && gameState.selectedColor) {
+            if (playerName && roomCode && gameState.selectedPawn) {
                 socket.emit('join-room', {
                     roomCode: roomCode,
                     playerName: playerName,
-                    playerColor: gameState.selectedColor
+                    playerPawn: gameState.selectedPawn
                 });
             }
         });
@@ -492,6 +625,7 @@
         socket.on('joined-room', (data) => {
             gameState.playerData = data.playerData;
             gameState.roomCode = data.roomCode;
+            gameState.gameLevel = data.gameLevel || 'basic';
             
             showStatus('Successfully joined the game!', 'success');
             joinForm.style.display = 'none';
@@ -503,29 +637,31 @@
         socket.on('join-error', (error) => {
             showStatus(error, 'error');
             
-            // If color is taken, refresh available colors
-            if (error.includes('Color already taken')) {
-                // Could implement color refresh here
+            // If pawn is taken, refresh available pawns
+            if (error.includes('already taken')) {
+                // Could implement pawn refresh here
             }
         });
 
         socket.on('room-updated', (data) => {
             gameState.players = data.players;
+            gameState.gameLevel = data.gameLevel || 'basic';
             updateOtherPlayersDisplay();
             
-            // Update available colors
-            updateAvailableColors(data.availableColors);
+            // Update available pawns
+            updateAvailablePawns(data.availablePawns);
         });
 
         socket.on('game-started', (data) => {
             gameState.gameStarted = true;
             gameState.currentPlayer = data.currentPlayer;
+            gameState.gameLevel = data.gameLevel || 'basic';
             
             waitingRoom.style.display = 'none';
             gameActive.style.display = 'block';
             
             updateGameDisplay();
-            updateTurnIndicator();
+            updateDifficultyDisplay();
         });
 
         socket.on('card-drawn', (data) => {
@@ -534,7 +670,7 @@
             gameState.currentPlayer = data.nextPlayer;
             
             updateGameDisplay();
-            updateTurnIndicator();
+            showCardInfo(data.cardType);
             
             // Show winner if game ended
             if (data.winner) {
@@ -547,7 +683,7 @@
         });
 
         socket.on('host-disconnected', () => {
-            showStatus('Host disconnected. Game ended.', 'error');
+            showStatus('Teacher disconnected. Game ended.', 'error');
             setTimeout(() => location.reload(), 3000);
         });
 
@@ -564,9 +700,12 @@
 
         function updatePlayerDisplay() {
             if (gameState.playerData) {
-                document.getElementById('playerPawn').style.backgroundColor = gameState.playerData.color;
-                document.getElementById('playerDisplayName').textContent = gameState.playerData.name;
-                document.getElementById('playerPosition').textContent = gameState.playerData.position;
+                const pawn = IDENTITY_PAWNS.find(p => p.id === gameState.playerData.pawnId);
+                if (pawn) {
+                    document.getElementById('playerPawn').innerHTML = pawn.icon;
+                    document.getElementById('playerDisplayName').textContent = gameState.playerData.name;
+                    document.getElementById('playerPosition').textContent = gameState.playerData.position;
+                }
             }
         }
 
@@ -578,12 +717,15 @@
             otherPlayersList.innerHTML = '';
             
             otherPlayers.forEach(player => {
+                const pawn = IDENTITY_PAWNS.find(p => p.id === player.pawnId);
                 const playerElement = document.createElement('div');
                 playerElement.className = 'other-player';
-                playerElement.style.borderLeftColor = player.color;
                 playerElement.innerHTML = `
-                    <div class="other-player-pawn" style="background-color: ${player.color}"></div>
-                    <span>${player.name} (${player.position})</span>
+                    <div class="other-player-pawn">${pawn ? pawn.icon : '👤'}</div>
+                    <div class="player-details">
+                        <div class="player-name">${player.name}</div>
+                        <div class="player-position">Ring: ${player.position}</div>
+                    </div>
                 `;
                 otherPlayersList.appendChild(playerElement);
             });
@@ -593,9 +735,12 @@
             // Update current player info
             const currentPlayerData = gameState.players.find(p => p.id === gameState.playerData?.id);
             if (currentPlayerData) {
-                document.getElementById('gamePlayerPawn').style.backgroundColor = currentPlayerData.color;
-                document.getElementById('gamePlayerName').textContent = currentPlayerData.name;
-                document.getElementById('gamePlayerPosition').textContent = currentPlayerData.position;
+                const pawn = IDENTITY_PAWNS.find(p => p.id === currentPlayerData.pawnId);
+                if (pawn) {
+                    document.getElementById('gamePlayerPawn').innerHTML = pawn.icon;
+                    document.getElementById('gamePlayerName').textContent = currentPlayerData.name;
+                    document.getElementById('gamePlayerPosition').textContent = currentPlayerData.position;
+                }
             }
             
             // Update other players in game view
@@ -604,39 +749,63 @@
             gameOtherPlayersList.innerHTML = '';
             
             otherPlayers.forEach(player => {
+                const pawn = IDENTITY_PAWNS.find(p => p.id === player.pawnId);
                 const playerElement = document.createElement('div');
                 playerElement.className = 'other-player';
-                playerElement.style.borderLeftColor = player.color;
                 playerElement.innerHTML = `
-                    <div class="other-player-pawn" style="background-color: ${player.color}"></div>
-                    <span>${player.name} (${player.position})</span>
+                    <div class="other-player-pawn">${pawn ? pawn.icon : '👤'}</div>
+                    <div class="player-details">
+                        <div class="player-name">${player.name}</div>
+                        <div class="player-position">Ring: ${player.position}</div>
+                    </div>
                 `;
                 gameOtherPlayersList.appendChild(playerElement);
             });
         }
 
-        function updateTurnIndicator() {
-            const turnIndicator = document.getElementById('turnIndicator');
-            const isMyTurn = gameState.currentPlayer && gameState.currentPlayer.id === gameState.playerData?.id;
+        function updateDifficultyDisplay() {
+            const difficultyBadge = document.getElementById('difficultyBadge');
+            difficultyBadge.className = `difficulty-badge difficulty-${gameState.gameLevel}`;
             
-            if (isMyTurn) {
-                turnIndicator.style.display = 'block';
-            } else {
-                turnIndicator.style.display = 'none';
-            }
+            const levelNames = {
+                'basic': 'Basic Level',
+                'intermediate': 'Intermediate Level',
+                'advanced': 'Advanced Level'
+            };
+            
+            difficultyBadge.textContent = levelNames[gameState.gameLevel] || 'Basic Level';
         }
 
-        function updateAvailableColors(availableColors) {
-            const colorOptions = document.querySelectorAll('.color-option');
-            PAWN_COLORS.forEach((color, index) => {
-                const option = colorOptions[index];
-                if (availableColors.includes(color)) {
+        function showCardInfo(cardType) {
+            const cardInfo = document.getElementById('cardInfo');
+            const cardTypeElement = document.getElementById('cardType');
+            
+            const cardTypes = {
+                'privileges': 'Privileges/Discrimination Card',
+                'social_policies': 'Social Policies Card',
+                'behaviors': 'Behaviors Card'
+            };
+            
+            cardTypeElement.textContent = cardTypes[cardType] || 'Card Drawn';
+            cardInfo.style.display = 'block';
+            
+            // Hide after 5 seconds
+            setTimeout(() => {
+                cardInfo.style.display = 'none';
+            }, 5000);
+        }
+
+        function updateAvailablePawns(availablePawns) {
+            const pawnOptions = document.querySelectorAll('.pawn-option');
+            IDENTITY_PAWNS.forEach((pawn, index) => {
+                const option = pawnOptions[index];
+                if (availablePawns && availablePawns.includes(pawn.id)) {
                     option.classList.remove('disabled');
-                } else {
+                } else if (availablePawns) {
                     option.classList.add('disabled');
-                    if (gameState.selectedColor === color) {
+                    if (gameState.selectedPawn && gameState.selectedPawn.id === pawn.id) {
                         option.classList.remove('selected');
-                        gameState.selectedColor = null;
+                        gameState.selectedPawn = null;
                         updateJoinButton();
                     }
                 }
@@ -648,9 +817,9 @@
             const isWinner = winner.id === gameState.playerData?.id;
             
             if (isWinner) {
-                winnerText.innerHTML = `🎉 Congratulations! You won! 🎉<br>You reached the center first!`;
+                winnerText.innerHTML = `🎉 You reached the center first! 🎉<br>Your journey through the spiral is complete.`;
             } else {
-                winnerText.innerHTML = `${winner.name} won the game!<br>They reached the center first.`;
+                winnerText.innerHTML = `${winner.name} reached the center first.<br>Everyone's journey tells a different story.`;
             }
             
             gameActive.style.display = 'none';
@@ -658,7 +827,7 @@
         }
 
         // Initialize
-        initializeColorSelector();
+        initializePawnSelector();
     </script>
 </body>
 </html>

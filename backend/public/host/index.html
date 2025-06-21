@@ -108,6 +108,12 @@
             margin-bottom: 0.5rem;
         }
 
+        .player-identity {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
         .player-position {
             color: #666;
             font-size: 0.9rem;
@@ -185,6 +191,17 @@
             margin: 1rem 0;
         }
 
+        .card-type-indicator {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
         .card-category {
             display: flex;
             gap: 1rem;
@@ -198,6 +215,7 @@
         .privilege { background: linear-gradient(45deg, #4caf50, #66bb6a); }
         .discrimination { background: linear-gradient(45deg, #f44336, #ef5350); }
         .social-policy { background: linear-gradient(45deg, #ff9800, #ffb74d); }
+        .behavior { background: linear-gradient(45deg, #9c27b0, #ba68c8); }
 
         .game-level {
             margin: 1rem 0;
@@ -224,6 +242,27 @@
             color: #333;
             font-size: 2rem;
             margin-bottom: 1rem;
+        }
+
+        .event-notification {
+            background: #ffebee;
+            border: 2px solid #f44336;
+            border-radius: 10px;
+            padding: 1rem;
+            margin: 1rem 0;
+            text-align: center;
+            display: none;
+        }
+
+        .event-notification.show {
+            display: block;
+            animation: pulse 1s ease-in-out;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
         }
 
         @media (max-width: 768px) {
@@ -289,23 +328,10 @@
                 <p>Draw a card and apply its effect</p>
             </div>
 
-            <div class="card-section">
-                <h4>Draw Card</h4>
-                <div class="card-category">
-                    <button class="button privilege" onclick="drawCard('privilege', 3)">Privilege (+3)</button>
-                    <button class="button privilege" onclick="drawCard('privilege', 2)">Privilege (+2)</button>
-                    <button class="button privilege" onclick="drawCard('privilege', 1)">Privilege (+1)</button>
-                </div>
-                <div class="card-category">
-                    <button class="button discrimination" onclick="drawCard('discrimination', -1)">Discrimination (-1)</button>
-                    <button class="button discrimination" onclick="drawCard('discrimination', -2)">Discrimination (-2)</button>
-                    <button class="button discrimination" onclick="drawCard('discrimination', -3)">Discrimination (-3)</button>
-                </div>
-                <div class="card-category" id="socialPolicyCards" style="display: none;">
-                    <button class="button social-policy" onclick="drawCard('social-policy', 2)">Social Policy (+2)</button>
-                    <button class="button social-policy" onclick="drawCard('social-policy', 1)">Social Policy (+1)</button>
-                    <button class="button social-policy" onclick="drawCard('social-policy', -1)">Social Policy (-1)</button>
-                </div>
+
+            <div id="eventNotification" class="event-notification">
+                <h4>Event Triggered!</h4>
+                <p id="eventText"></p>
             </div>
         </div>
 
@@ -322,7 +348,9 @@
             roomCode: null,
             players: [],
             gameStarted: false,
-            gameLevel: 'basic'
+            gameLevel: 'basic',
+            currentPlayer: null,
+            nextCardType: 'privilege-discrimination'
         };
 
         // DOM elements
@@ -336,9 +364,16 @@
         const gameBoard = document.getElementById('game-board');
         const gameControls = document.getElementById('game-controls');
         const currentPlayerName = document.getElementById('currentPlayerName');
+        const nextCardType = document.getElementById('nextCardType');
         const winnerAnnouncement = document.getElementById('winner-announcement');
         const winnerText = document.getElementById('winnerText');
+        const eventNotification = document.getElementById('eventNotification');
+        const eventText = document.getElementById('eventText');
+
+        // Card category elements
+        const privilegeDiscriminationCards = document.getElementById('privilegeDiscriminationCards');
         const socialPolicyCards = document.getElementById('socialPolicyCards');
+        const behaviorCards = document.getElementById('behaviorCards');
 
         // Create room
         createRoomBtn.addEventListener('click', () => {
@@ -370,26 +405,30 @@
         socket.on('game-started', (data) => {
             gameState.gameStarted = true;
             gameState.gameLevel = data.gameLevel;
+            gameState.currentPlayer = data.currentPlayer;
+            gameState.nextCardType = data.nextCardType;
+            
             gameBoard.style.display = 'block';
             gameControls.style.display = 'block';
             startGameBtn.style.display = 'none';
             
-            // Show social policy cards for intermediate and advanced levels
-            if (data.gameLevel === 'intermediate' || data.gameLevel === 'advanced') {
-                socialPolicyCards.style.display = 'flex';
-            }
-            
             updateCurrentPlayer(data.currentPlayer);
+            updateCardInterface();
             updatePlayerPositions();
         });
 
         socket.on('card-drawn', (data) => {
-            // Update player position
+            // Update game state
+            gameState.players = data.allPlayers;
+            gameState.currentPlayer = data.nextPlayer;
+            gameState.nextCardType = data.nextCardType;
+            
+            // Update player positions
             updatePlayerPositions();
             
-            // Show event notification if player is on event ring
-            if (data.isOnEvent && gameState.gameLevel === 'advanced') {
-                alert(`${data.player.name} landed on an EVENT ring (${data.newPosition})! Apply event card.`);
+            // Show events if triggered
+            if (data.eventsTriggered && data.eventsTriggered.length > 0) {
+                showEventNotification(data.eventsTriggered);
             }
             
             // Check for winner
@@ -397,11 +436,16 @@
                 showWinner(data.winner);
             } else {
                 updateCurrentPlayer(data.nextPlayer);
+                updateCardInterface();
             }
         });
 
         socket.on('game-ended', (data) => {
             showWinner(data.winner);
+        });
+
+        socket.on('error', (error) => {
+            alert('Error: ' + error);
         });
 
         // Functions
@@ -415,6 +459,7 @@
                 playerCard.style.borderLeftColor = player.color;
                 playerCard.innerHTML = `
                     <div class="player-name">${player.name}</div>
+                    <div class="player-identity">${player.identityName}</div>
                     <div class="player-position">Ring: ${player.position}</div>
                 `;
                 playersGrid.appendChild(playerCard);
@@ -472,13 +517,10 @@
                 
                 const ring = document.getElementById(`ring-${player.position}`);
                 if (ring) {
-                    const ringRect = ring.getBoundingClientRect();
-                    const boardRect = document.getElementById('spiralBoard').getBoundingClientRect();
-                    
                     // Position pawns around the ring
                     const angle = (index * (360 / gameState.players.length)) * (Math.PI / 180);
                     const ringRadius = parseFloat(ring.style.width) / 2;
-                    const pawnRadius = ringRadius - 30;
+                    const pawnRadius = Math.max(10, ringRadius - 30);
                     
                     const x = Math.cos(angle) * pawnRadius;
                     const y = Math.sin(angle) * pawnRadius;
@@ -493,22 +535,52 @@
 
         function updateCurrentPlayer(player) {
             if (player) {
-                currentPlayerName.textContent = player.name;
+                currentPlayerName.textContent = `${player.name} (${player.identityName})`;
                 currentPlayerName.style.color = player.color;
             }
         }
 
-        function drawCard(category, steps) {
-            socket.emit('draw-card', {
+        function updateCardInterface() {
+            // Update next card type indicator
+            const cardTypeMap = {
+                'privilege-discrimination': 'Privilege/Discrimination',
+                'social-policies': 'Social Policies',
+                'behaviors': 'Behaviors'
+            };
+            
+            nextCardType.textContent = cardTypeMap[gameState.nextCardType] || gameState.nextCardType;
+            
+            // Show/hide appropriate card categories
+            privilegeDiscriminationCards.style.display = gameState.nextCardType === 'privilege-discrimination' ? 'flex' : 'none';
+            socialPolicyCards.style.display = gameState.nextCardType === 'social-policies' ? 'flex' : 'none';
+            behaviorCards.style.display = gameState.nextCardType === 'behaviors' ? 'flex' : 'none';
+        }
+
+        function drawCard(category, steps, cardType) {
+            const cardData = {
                 category: category,
                 steps: steps,
-                description: `${category} card: ${steps > 0 ? '+' : ''}${steps} rings`
-            });
+                cardType: cardType,
+                description: `${cardType} card: ${steps > 0 ? '+' : ''}${steps} rings`
+            };
+            
+            socket.emit('draw-card', cardData);
+        }
+
+        function showEventNotification(events) {
+            if (events.length > 0) {
+                const event = events[0]; // Show first event
+                eventText.textContent = `${event.player.name} landed on ring ${event.player.position}: ${event.event.name} - ${event.event.description}`;
+                eventNotification.classList.add('show');
+                
+                setTimeout(() => {
+                    eventNotification.classList.remove('show');
+                }, 5000);
+            }
         }
 
         function showWinner(winner) {
-            winnerText.textContent = `${winner.name} has reached the center and won the game!`;
-            winnerText.style.color = winner.color;
+            winnerText.innerHTML = `<strong>${winner.name}</strong> (${winner.identityName}) has reached the center and won the game!`;
             winnerAnnouncement.style.display = 'block';
             gameControls.style.display = 'none';
         }
