@@ -259,6 +259,20 @@
             animation: pulse 1s ease-in-out;
         }
 
+        .last-card-drawn {
+            background: #e8f5e8;
+            border: 2px solid #4caf50;
+            border-radius: 10px;
+            padding: 1rem;
+            margin: 1rem 0;
+            text-align: center;
+            display: none;
+        }
+
+        .last-card-drawn.show {
+            display: block;
+        }
+
         @keyframes pulse {
             0% { transform: scale(1); }
             50% { transform: scale(1.05); }
@@ -328,6 +342,46 @@
                 <p>Draw a card and apply its effect</p>
             </div>
 
+            <div id="lastCardDrawn" class="last-card-drawn">
+                <h4>Last Card Drawn:</h4>
+                <p id="lastCardText"></p>
+            </div>
+
+            <div class="card-section">
+                <div class="card-type-indicator">
+                    Next Card Type: <span id="nextCardType">Privilege/Discrimination</span>
+                </div>
+
+                <!-- Privilege/Discrimination Cards -->
+                <div id="privilegeDiscriminationCards" class="card-category">
+                    <button class="button privilege" onclick="drawCard('privilege-discrimination', 2, 'Privilege')">
+                        Privilege Card (+2)
+                    </button>
+                    <button class="button discrimination" onclick="drawCard('privilege-discrimination', -1, 'Discrimination')">
+                        Discrimination Card (-1)
+                    </button>
+                </div>
+
+                <!-- Social Policy Cards -->
+                <div id="socialPolicyCards" class="card-category" style="display: none;">
+                    <button class="button social-policy" onclick="drawCard('social-policies', 1, 'Progressive Policy')">
+                        Progressive Policy (+1)
+                    </button>
+                    <button class="button social-policy" onclick="drawCard('social-policies', -2, 'Regressive Policy')">
+                        Regressive Policy (-2)
+                    </button>
+                </div>
+
+                <!-- Behavior Cards -->
+                <div id="behaviorCards" class="card-category" style="display: none;">
+                    <button class="button behavior" onclick="drawCard('behaviors', 1, 'Positive Behavior')">
+                        Positive Behavior (+1)
+                    </button>
+                    <button class="button behavior" onclick="drawCard('behaviors', -1, 'Negative Behavior')">
+                        Negative Behavior (-1)
+                    </button>
+                </div>
+            </div>
 
             <div id="eventNotification" class="event-notification">
                 <h4>Event Triggered!</h4>
@@ -369,6 +423,8 @@
         const winnerText = document.getElementById('winnerText');
         const eventNotification = document.getElementById('eventNotification');
         const eventText = document.getElementById('eventText');
+        const lastCardDrawn = document.getElementById('lastCardDrawn');
+        const lastCardText = document.getElementById('lastCardText');
 
         // Card category elements
         const privilegeDiscriminationCards = document.getElementById('privilegeDiscriminationCards');
@@ -423,6 +479,9 @@
             gameState.currentPlayer = data.nextPlayer;
             gameState.nextCardType = data.nextCardType;
             
+            // Show last card drawn
+            showLastCardDrawn(data.card, data.cardDrawnBy);
+            
             // Update player positions
             updatePlayerPositions();
             
@@ -440,8 +499,20 @@
             }
         });
 
+        socket.on('player-moved', (data) => {
+            // Update player positions when a player moves
+            gameState.players = data.allPlayers;
+            updatePlayerPositions();
+            updatePlayersDisplay();
+        });
+
         socket.on('game-ended', (data) => {
             showWinner(data.winner);
+        });
+
+        socket.on('host-disconnected', () => {
+            alert('Host has disconnected. Game ended.');
+            location.reload();
         });
 
         socket.on('error', (error) => {
@@ -459,7 +530,7 @@
                 playerCard.style.borderLeftColor = player.color;
                 playerCard.innerHTML = `
                     <div class="player-name">${player.name}</div>
-                    <div class="player-identity">${player.identityName}</div>
+                    <div class="player-identity">${player.identityName} ${player.icon}</div>
                     <div class="player-position">Ring: ${player.position}</div>
                 `;
                 playersGrid.appendChild(playerCard);
@@ -514,6 +585,7 @@
                 const pawn = document.createElement('div');
                 pawn.className = 'pawn';
                 pawn.style.backgroundColor = player.color;
+                pawn.title = `${player.name} (${player.identityName})`;
                 
                 const ring = document.getElementById(`ring-${player.position}`);
                 if (ring) {
@@ -567,6 +639,15 @@
             socket.emit('draw-card', cardData);
         }
 
+        function showLastCardDrawn(card, player) {
+            lastCardText.innerHTML = `<strong>${player.name}</strong> drew: <strong>${card.cardType}</strong> (${card.steps > 0 ? '+' : ''}${card.steps} rings)`;
+            lastCardDrawn.classList.add('show');
+            
+            setTimeout(() => {
+                lastCardDrawn.classList.remove('show');
+            }, 5000);
+        }
+
         function showEventNotification(events) {
             if (events.length > 0) {
                 const event = events[0]; // Show first event
@@ -575,7 +656,7 @@
                 
                 setTimeout(() => {
                     eventNotification.classList.remove('show');
-                }, 5000);
+                }, 8000);
             }
         }
 

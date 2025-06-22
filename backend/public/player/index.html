@@ -153,6 +153,33 @@
             transform: none;
         }
 
+        .button.draw-card {
+            background: linear-gradient(45deg, #f39c12, #e67e22);
+            font-size: 1.2rem;
+            padding: 18px;
+            margin-bottom: 1rem;
+        }
+
+        .button.move-forward {
+            background: linear-gradient(45deg, #27ae60, #2ecc71);
+            margin-bottom: 0.5rem;
+        }
+
+        .button.move-backward {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+        }
+
+        .movement-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .movement-buttons .button {
+            margin-top: 0;
+            flex: 1;
+        }
+
         .status-message {
             padding: 1rem;
             border-radius: 10px;
@@ -351,17 +378,22 @@
             animation: pulse 2s infinite;
         }
 
+        .turn-waiting {
+            background: linear-gradient(45deg, #95a5a6, #7f8c8d);
+            animation: none;
+        }
+
         @keyframes pulse {
             0% { transform: scale(1); }
             50% { transform: scale(1.02); }
             100% { transform: scale(1); }
         }
 
-        .card-info {
+        .card-display {
             background: #fff9e6;
             border: 2px solid #f39c12;
             border-radius: 12px;
-            padding: 1rem;
+            padding: 1.5rem;
             margin: 1rem 0;
             text-align: center;
         }
@@ -370,6 +402,23 @@
             font-weight: bold;
             color: #d35400;
             margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .card-text {
+            color: #8b4513;
+            font-size: 1rem;
+            line-height: 1.4;
+            margin-bottom: 1rem;
+        }
+
+        .card-instruction {
+            background: #e8f5e8;
+            border-radius: 8px;
+            padding: 0.8rem;
+            color: #1e8449;
+            font-weight: 600;
+            font-size: 0.9rem;
         }
 
         .winner-announcement {
@@ -404,6 +453,16 @@
             line-height: 1.5;
         }
 
+        .current-turn-info {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+            padding: 1rem;
+            border-radius: 12px;
+            text-align: center;
+            margin: 1rem 0;
+            font-weight: 600;
+        }
+
         @media (max-width: 480px) {
             .container {
                 margin: 0;
@@ -417,6 +476,11 @@
             
             .pawn-option {
                 padding: 0.8rem;
+            }
+
+            .movement-buttons {
+                flex-direction: column;
+                gap: 0.5rem;
             }
         }
     </style>
@@ -483,7 +547,7 @@
                 <div class="game-info">
                     <div id="difficultyBadge" class="difficulty-badge difficulty-basic">Basic Level</div>
                     <h4>Game Instructions</h4>
-                    <p>Watch the main screen and move your pawn according to the card instructions. Reflect on your experiences with privilege and discrimination.</p>
+                    <p>When it's your turn, draw a card and decide whether to move forward or backward based on your experience with the situation described.</p>
                 </div>
 
                 <div class="game-status">
@@ -496,13 +560,32 @@
                     </div>
                 </div>
 
-                <div id="turnIndicator" class="turn-indicator" style="display: none;">
-                    🎯 A card is being drawn - check the main screen!
+                <!-- Turn Information -->
+                <div id="turnIndicator" class="turn-indicator turn-waiting">
+                    Waiting for your turn...
                 </div>
 
-                <div id="cardInfo" class="card-info" style="display: none;">
+                <div id="currentTurnInfo" class="current-turn-info" style="display: none;">
+                    It's <span id="currentPlayerName"></span>'s turn
+                </div>
+
+                <!-- Card Drawing Section -->
+                <div id="cardDrawSection" style="display: none;">
+                    <button id="drawCardBtn" class="button draw-card">🎴 Draw Card</button>
+                </div>
+
+                <!-- Card Display -->
+                <div id="cardDisplay" class="card-display" style="display: none;">
                     <div class="card-type" id="cardType">Card Type</div>
-                    <p>Follow the instructions on the main screen to move your pawn.</p>
+                    <div class="card-text" id="cardText">Card content will appear here</div>
+                    <div class="card-instruction">
+                        Choose your response based on your identity and experiences
+                    </div>
+                    
+                    <div class="movement-buttons">
+                        <button id="moveForwardBtn" class="button move-forward">⬆️ Move Forward</button>
+                        <button id="moveBackwardBtn" class="button move-backward">⬇️ Move Backward</button>
+                    </div>
                 </div>
 
                 <div class="other-players">
@@ -535,7 +618,10 @@
             players: [],
             currentPlayer: null,
             gameStarted: false,
-            gameLevel: 'basic'
+            gameLevel: 'basic',
+            isMyTurn: false,
+            currentCard: null,
+            cardCategories: ['privileges', 'social_policies', 'behaviors']
         };
 
         // Available identity pawns
@@ -552,6 +638,37 @@
             { id: 'neutral', icon: '👤', label: 'Neutral', color: '#34495e' }
         ];
 
+        // Sample cards for different categories
+        const SAMPLE_CARDS = {
+            privileges: [
+                "You can easily find beauty products that match your skin tone.",
+                "You've never been followed by security in a store.",
+                "Your achievements are never questioned as diversity hires.",
+                "You can walk alone at night without fear.",
+                "Your name is never mispronounced or seen as 'difficult'.",
+                "You see people who look like you in leadership positions.",
+                "You've never been asked to speak for your entire race/group."
+            ],
+            social_policies: [
+                "A new accessibility law is passed requiring ramps in all buildings.",
+                "Healthcare becomes free for all citizens.",
+                "Marriage equality is legalized nationwide.",
+                "Anti-discrimination laws in employment are strengthened.",
+                "Public transportation becomes wheelchair accessible.",
+                "Mental health support is included in all health plans.",
+                "Educational funding is distributed more equally across districts."
+            ],
+            behaviors: [
+                "You interrupt others in meetings without being called aggressive.",
+                "You can express anger without being labeled as 'difficult'.",
+                "Your cultural holidays are recognized by your workplace/school.",
+                "You can make mistakes without them being attributed to your identity.",
+                "You receive mentorship and networking opportunities easily.",
+                "Your accent or way of speaking is considered 'professional'.",
+                "You can discuss your weekend activities without hiding your identity."
+            ]
+        };
+
         // DOM elements
         const joinForm = document.getElementById('joinForm');
         const playerNameInput = document.getElementById('playerName');
@@ -562,6 +679,12 @@
         const waitingRoom = document.getElementById('waitingRoom');
         const gameActive = document.getElementById('gameActive');
         const winnerAnnouncement = document.getElementById('winnerAnnouncement');
+        const turnIndicator = document.getElementById('turnIndicator');
+        const cardDrawSection = document.getElementById('cardDrawSection');
+        const cardDisplay = document.getElementById('cardDisplay');
+        const drawCardBtn = document.getElementById('drawCardBtn');
+        const moveForwardBtn = document.getElementById('moveForwardBtn');
+        const moveBackwardBtn = document.getElementById('moveBackwardBtn');
 
         // Initialize pawn selector
         function initializePawnSelector() {
@@ -621,6 +744,87 @@
             }
         });
 
+        drawCardBtn.addEventListener('click', () => {
+            drawCard();
+        });
+
+        moveForwardBtn.addEventListener('click', () => {
+            makeMove('forward');
+        });
+
+        moveBackwardBtn.addEventListener('click', () => {
+            makeMove('backward');
+        });
+
+        // Card drawing function
+        function drawCard() {
+            const currentCategory = getCurrentCardCategory();
+            const cards = SAMPLE_CARDS[currentCategory];
+            const randomCard = cards[Math.floor(Math.random() * cards.length)];
+            
+            gameState.currentCard = {
+                type: currentCategory,
+                text: randomCard
+            };
+
+            displayCard(gameState.currentCard);
+            cardDrawSection.style.display = 'none';
+            cardDisplay.style.display = 'block';
+
+            // Emit card drawn event
+            socket.emit('card-drawn', {
+                roomCode: gameState.roomCode,
+                playerId: gameState.playerData.id,
+                card: gameState.currentCard
+            });
+        }
+
+        // Get current card category based on game level and turn
+        function getCurrentCardCategory() {
+            if (gameState.gameLevel === 'basic') {
+                return 'privileges';
+            } else if (gameState.gameLevel === 'intermediate') {
+                // Alternate between privileges and social_policies
+                const playerIndex = gameState.players.findIndex(p => p.id === gameState.currentPlayer);
+                return playerIndex % 2 === 0 ? 'privileges' : 'social_policies';
+            } else { // advanced
+                // Cycle through all three categories
+                const playerIndex = gameState.players.findIndex(p => p.id === gameState.currentPlayer);
+                const categories = ['privileges', 'social_policies', 'behaviors'];
+                return categories[playerIndex % 3];
+            }
+        }
+
+        // Display card
+        function displayCard(card) {
+            const cardTypeElement = document.getElementById('cardType');
+            const cardTextElement = document.getElementById('cardText');
+            
+            const cardTypeNames = {
+                'privileges': 'Privileges/Discrimination Card',
+                'social_policies': 'Social Policies Card',
+                'behaviors': 'Behaviors Card'
+            };
+            
+            cardTypeElement.textContent = cardTypeNames[card.type] || 'Card';
+            cardTextElement.textContent = card.text;
+        }
+
+        // Make move
+        function makeMove(direction) {
+            socket.emit('player-move', {
+                roomCode: gameState.roomCode,
+                playerId: gameState.playerData.id,
+                direction: direction,
+                card: gameState.currentCard
+            });
+
+            // Hide card and movement buttons
+            cardDisplay.style.display = 'none';
+            gameState.isMyTurn = false;
+            updateTurnDisplay();
+        }
+
         // Socket events
         socket.on('joined-room', (data) => {
             gameState.playerData = data.playerData;
@@ -656,23 +860,29 @@
             gameState.gameStarted = true;
             gameState.currentPlayer = data.currentPlayer;
             gameState.gameLevel = data.gameLevel || 'basic';
+            gameState.players = data.players;
             
             waitingRoom.style.display = 'none';
             gameActive.style.display = 'block';
             
             updateGameDisplay();
             updateDifficultyDisplay();
+            updateTurnDisplay();
         });
 
-        socket.on('card-drawn', (data) => {
-            // Update all player positions
-            gameState.players = data.allPlayers;
-            gameState.currentPlayer = data.nextPlayer;
-            
+        socket.on('turn-changed', (data) => {
+            gameState.currentPlayer = data.currentPlayer;
+            gameState.players = data.players;
+            updateTurnDisplay();
             updateGameDisplay();
-            showCardInfo(data.cardType);
+        });
+
+        socket.on('player-moved', (data) => {
+            gameState.players = data.players;
+            gameState.currentPlayer = data.nextPlayer;
+            updateGameDisplay();
+            updateTurnDisplay();
             
-            // Show winner if game ended
             if (data.winner) {
                 showWinner(data.winner);
             }
@@ -697,6 +907,7 @@
                 statusMessage.style.display = 'none';
             }, 5000);
         }
+
 
         function updatePlayerDisplay() {
             if (gameState.playerData) {
