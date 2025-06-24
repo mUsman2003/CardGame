@@ -1,0 +1,421 @@
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            max-width: 1200px;
+            width: 95%;
+            margin: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .room-setup {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .room-code {
+            background: #f8f9fa;
+            border: 2px dashed #6c757d;
+            border-radius: 10px;
+            padding: 1rem;
+            margin: 1rem 0;
+            font-size: 2rem;
+            font-weight: bold;
+            color: #495057;
+            letter-spacing: 3px;
+        }
+
+        .button {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 0.5rem;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .players-section {
+            margin: 2rem 0;
+        }
+
+        .players-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .player-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1rem;
+            text-align: center;
+            border-left: 4px solid;
+            transition: all 0.3s ease;
+        }
+
+        .player-card.waiting {
+            background: #fff3cd;
+            border-left-color: #ffc107;
+        }
+
+        .player-card.decided {
+            background: #d4edda;
+            border-left-color: #28a745;
+        }
+
+        .player-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .player-identity {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .player-position {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .player-status {
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+            padding: 0.3rem;
+            border-radius: 5px;
+        }
+
+        .player-status.waiting {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .player-status.decided {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .game-board {
+            display: none;
+            margin: 2rem 0;
+        }
+
+        .spiral-board {
+            width: 600px;
+            height: 600px;
+            position: relative;
+            margin: 0 auto;
+            background: radial-gradient(circle, #fff 0%, #f0f0f0 100%);
+            border-radius: 50%;
+            border: 3px solid #333;
+        }
+
+        .ring {
+            position: absolute;
+            border: 2px solid #ddd;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ring.event-ring {
+            border-color: #ff6b6b;
+            background: rgba(255, 107, 107, 0.1);
+        }
+
+        .ring-number {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .pawn {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            position: absolute;
+            transition: all 0.5s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        .game-controls {
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        .current-player {
+            background: #e3f2fd;
+            border: 2px solid #2196f3;
+            border-radius: 10px;
+            padding: 1rem;
+            margin: 1rem 0;
+            text-align: center;
+        }
+
+        .card-section, .card-category {
+            display: none !important;
+        }
+
+        .card-drawn-display {
+            background: #e3ffe6;
+            border: 3px solid #4caf50;
+            border-radius: 14px;
+            box-shadow: 0 4px 24px rgba(76,175,80,0.10);
+            padding: 1.5rem;
+            margin: 1rem 0;
+            text-align: center;
+            display: none;
+        }
+
+        .card-drawn-display.show {
+            display: block;
+        }
+
+        .card-drawn-display h3 {
+            color: #2e7d32;
+            margin-bottom: 1rem;
+        }
+
+        .card-description {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid #4caf50;
+        }
+
+        .decision-phase {
+            background: #fffbe6;
+            border: 3px solid #ff9800;
+            border-radius: 14px;
+            padding: 2rem 1.5rem;
+            margin: 1.5rem 0;
+            box-shadow: 0 4px 24px rgba(255, 152, 0, 0.10);
+            animation: decision-pop 0.7s;
+        }
+
+        .decision-phase.show {
+            display: block;
+        }
+
+        .decision-phase h3 {
+            color: #e65100;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .player-decisions {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .player-decision {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            border-left: 4px solid #ddd;
+        }
+
+        .player-decision.decided {
+            border-left-color: #4caf50;
+            background: #f1f8e9;
+        }
+
+        .player-decision-text {
+            font-weight: bold;
+            margin-top: 0.5rem;
+            color: #2e7d32;
+        }
+
+        .card-type-indicator {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .privilege {
+            background: linear-gradient(45deg, #4caf50, #66bb6a);
+        }
+
+        .discrimination {
+            background: linear-gradient(45deg, #f44336, #ef5350);
+        }
+
+        .social-policy {
+            background: linear-gradient(45deg, #ff9800, #ffb74d);
+        }
+
+        .behavior {
+            background: linear-gradient(45deg, #9c27b0, #ba68c8);
+        }
+
+        .game-level {
+            margin: 1rem 0;
+        }
+
+        .level-select {
+            padding: 8px 15px;
+            border-radius: 20px;
+            border: 2px solid #ddd;
+            font-size: 1rem;
+            margin: 0 0.5rem;
+        }
+
+        .winner-announcement {
+            background: linear-gradient(45deg, #ffd700, #ffed4a);
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+            margin: 2rem 0;
+            display: none;
+        }
+
+        .winner-announcement h2 {
+            color: #333;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .event-notification {
+            background: #ffebee;
+            border: 2px solid #f44336;
+            border-radius: 10px;
+            padding: 1rem;
+            margin: 1rem 0;
+            text-align: center;
+            display: none;
+        }
+
+        .event-notification.show {
+            display: block;
+            animation: pulse 1s ease-in-out;
+        }
+
+        .progress-indicator {
+            background: #e3f2fd;
+            border-radius: 10px;
+            padding: 1.2rem;
+            margin: 1rem 0;
+            border: 2px solid #2196f3;
+            font-weight: bold;
+        }
+
+        .progress-bar {
+            background: #e0e0e0;
+            border-radius: 10px;
+            height: 14px;
+            margin: 0.7rem 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #4caf50 0%, #2196f3 100%);
+            height: 100%;
+            transition: width 0.5s cubic-bezier(.4,2,.6,1);
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        @keyframes decision-pop {
+            0% { transform: scale(0.97); box-shadow: 0 0 0 rgba(255,152,0,0.0); }
+            60% { transform: scale(1.03); box-shadow: 0 8px 32px rgba(255,152,0,0.18); }
+            100% { transform: scale(1); box-shadow: 0 4px 24px rgba(255,152,0,0.10); }
+        }
+
+        @keyframes pulse-card {
+            0% { box-shadow: 0 0 0 0 rgba(33,150,243,0.12); }
+            70% { box-shadow: 0 0 0 10px rgba(33,150,243,0.0); }
+            100% { box-shadow: 0 0 0 0 rgba(33,150,243,0.0); }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+                margin: 10px;
+            }
+
+            .spiral-board {
+                width: 400px;
+                height: 400px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .player-decisions {
+                grid-template-columns: 1fr;
+            }
+        }

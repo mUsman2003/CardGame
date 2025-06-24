@@ -4,486 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Social Spiral Game - Player</title>
+    <link rel="stylesheet" href="styles.css">
     <script src="/socket.io/socket.io.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
-            min-height: 100vh;
-            padding: 1rem;
-        }
-
-        .container {
-            max-width: 420px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-            overflow: hidden;
-        }
-
-        .header {
-            background: linear-gradient(45deg, #2c3e50, #3498db);
-            color: white;
-            padding: 2rem 1.5rem;
-            text-align: center;
-        }
-
-        .header h1 {
-            font-size: 1.8rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .header p {
-            opacity: 0.9;
-            font-size: 0.95rem;
-        }
-
-        .content {
-            padding: 2rem 1.5rem;
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-            color: #333;
-        }
-
-        .form-group input, .form-group select {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #e1e5e9;
-            border-radius: 10px;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-        }
-
-        .form-group input:focus, .form-group select:focus {
-            outline: none;
-            border-color: #3498db;
-            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
-        }
-
-        .pawn-selector {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 0.8rem;
-            margin-top: 0.5rem;
-        }
-
-        .pawn-option {
-            padding: 1rem;
-            border: 2px solid #e1e5e9;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-align: center;
-            background: white;
-            position: relative;
-        }
-
-        .pawn-option:hover {
-            border-color: #3498db;
-            background: #f8fafe;
-        }
-
-        .pawn-option.selected {
-            border-color: #2c3e50;
-            background: #ecf0f1;
-            transform: scale(1.02);
-        }
-
-        .pawn-option.disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-            background: #f8f9fa;
-        }
-
-        .pawn-option.disabled:hover {
-            border-color: #e1e5e9;
-            background: #f8f9fa;
-            transform: none;
-        }
-
-        .pawn-icon {
-            font-size: 1.5rem;
-            margin-bottom: 0.3rem;
-        }
-
-        .pawn-label {
-            font-size: 0.85rem;
-            font-weight: 500;
-            color: #333;
-            line-height: 1.2;
-        }
-
-        .button {
-            width: 100%;
-            background: linear-gradient(45deg, #2c3e50, #3498db);
-            color: white;
-            border: none;
-            padding: 15px;
-            border-radius: 10px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-top: 1rem;
-        }
-
-        .button:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-
-        .button:disabled {
-            background: #bdc3c7;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .button.draw-card {
-            background: linear-gradient(45deg, #f39c12, #e67e22);
-            font-size: 1.2rem;
-            padding: 18px;
-            margin-bottom: 1rem;
-        }
-
-        .button.move-forward {
-            background: linear-gradient(45deg, #27ae60, #2ecc71);
-            margin-bottom: 0.5rem;
-        }
-
-        .button.move-backward {
-            background: linear-gradient(45deg, #e74c3c, #c0392b);
-        }
-
-        .movement-buttons {
-            display: flex;
-            gap: 0.5rem;
-            margin-top: 1rem;
-        }
-
-        .movement-buttons .button {
-            margin-top: 0;
-            flex: 1;
-        }
-
-        .status-message {
-            padding: 1rem;
-            border-radius: 10px;
-            margin: 1rem 0;
-            text-align: center;
-            font-weight: 600;
-        }
-
-        .status-success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .status-error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        .status-info {
-            background: #d1ecf1;
-            color: #0c5460;
-            border: 1px solid #bee5eb;
-        }
-
-        .game-status {
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 1.5rem;
-            margin: 1rem 0;
-            text-align: center;
-        }
-
-        .player-info {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        .player-pawn {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            border: 3px solid #2c3e50;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            background: white;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        .position-display {
-            background: linear-gradient(45deg, #2c3e50, #3498db);
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-weight: bold;
-            font-size: 1.1rem;
-        }
-
-        .waiting-room {
-            text-align: center;
-            padding: 2rem 0;
-        }
-
-        .waiting-room h3 {
-            color: #333;
-            margin-bottom: 1rem;
-        }
-
-        .loading-spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #3498db;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 1rem auto;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .game-info {
-            background: #e8f4fd;
-            border-radius: 12px;
-            padding: 1.2rem;
-            margin: 1rem 0;
-            border-left: 4px solid #3498db;
-        }
-
-        .game-info h4 {
-            color: #2c3e50;
-            margin-bottom: 0.5rem;
-            font-size: 1.1rem;
-        }
-
-        .game-info p {
-            color: #34495e;
-            font-size: 0.95rem;
-            line-height: 1.4;
-        }
-
-        .difficulty-badge {
-            display: inline-block;
-            padding: 0.3rem 0.8rem;
-            border-radius: 15px;
-            font-size: 0.8rem;
-            font-weight: bold;
-            margin-bottom: 0.5rem;
-        }
-
-        .difficulty-basic {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .difficulty-intermediate {
-            background: #fff3cd;
-            color: #856404;
-        }
-
-        .difficulty-advanced {
-            background: #f8d7da;
-            color: #721c24;
-        }
-
-        .other-players {
-            margin-top: 1.5rem;
-        }
-
-        .other-players h4 {
-            color: #333;
-            margin-bottom: 1rem;
-            text-align: center;
-        }
-
-        .players-list {
-            display: flex;
-            flex-direction: column;
-            gap: 0.8rem;
-        }
-
-        .other-player {
-            background: white;
-            border-radius: 12px;
-            padding: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            border: 2px solid #ecf0f1;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-
-        .other-player-pawn {
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            border: 2px solid #2c3e50;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-            background: white;
-        }
-
-        .player-details {
-            flex: 1;
-        }
-
-        .player-name {
-            font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 0.2rem;
-        }
-
-        .player-position {
-            font-size: 0.9rem;
-            color: #7f8c8d;
-        }
-
-        .turn-indicator {
-            background: linear-gradient(45deg, #27ae60, #2ecc71);
-            color: white;
-            padding: 1rem;
-            border-radius: 12px;
-            text-align: center;
-            font-weight: bold;
-            margin: 1rem 0;
-            animation: pulse 2s infinite;
-        }
-
-        .turn-waiting {
-            background: linear-gradient(45deg, #95a5a6, #7f8c8d);
-            animation: none;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.02); }
-            100% { transform: scale(1); }
-        }
-
-        .card-display {
-            background: #fff9e6;
-            border: 2px solid #f39c12;
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin: 1rem 0;
-            text-align: center;
-        }
-
-        .card-type {
-            font-weight: bold;
-            color: #d35400;
-            margin-bottom: 0.5rem;
-            font-size: 1.1rem;
-        }
-
-        .card-text {
-            color: #8b4513;
-            font-size: 1rem;
-            line-height: 1.4;
-            margin-bottom: 1rem;
-        }
-
-        .card-instruction {
-            background: #e8f5e8;
-            border-radius: 8px;
-            padding: 0.8rem;
-            color: #1e8449;
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
-
-        .winner-announcement {
-            background: linear-gradient(45deg, #f1c40f, #f39c12);
-            color: #2c3e50;
-            padding: 2rem;
-            border-radius: 15px;
-            text-align: center;
-            margin: 1rem 0;
-        }
-
-        .winner-announcement h2 {
-            font-size: 2rem;
-            margin-bottom: 1rem;
-        }
-
-        .reflection-prompt {
-            background: #e8f5e8;
-            border: 2px solid #27ae60;
-            border-radius: 12px;
-            padding: 1.2rem;
-            margin: 1rem 0;
-        }
-
-        .reflection-prompt h4 {
-            color: #1e8449;
-            margin-bottom: 0.8rem;
-        }
-
-        .reflection-prompt p {
-            color: #2d5016;
-            line-height: 1.5;
-        }
-
-        .current-turn-info {
-            background: linear-gradient(45deg, #3498db, #2980b9);
-            color: white;
-            padding: 1rem;
-            border-radius: 12px;
-            text-align: center;
-            margin: 1rem 0;
-            font-weight: 600;
-        }
-
-        @media (max-width: 480px) {
-            .container {
-                margin: 0;
-                border-radius: 0;
-                min-height: 100vh;
-            }
-            
-            .pawn-selector {
-                grid-template-columns: 1fr;
-            }
-            
-            .pawn-option {
-                padding: 0.8rem;
-            }
-
-            .movement-buttons {
-                flex-direction: column;
-                gap: 0.5rem;
-            }
-        }
-    </style>
 </head>
 <body>
     <div class="container">
@@ -547,7 +69,7 @@
                 <div class="game-info">
                     <div id="difficultyBadge" class="difficulty-badge difficulty-basic">Basic Level</div>
                     <h4>Game Instructions</h4>
-                    <p>When it's your turn, draw a card and decide whether to move forward or backward based on your experience with the situation described.</p>
+                    <p>When a card is drawn by the host, decide whether to move forward or backward based on your experience with the situation described.</p>
                 </div>
 
                 <div class="game-status">
@@ -562,29 +84,49 @@
 
                 <!-- Turn Information -->
                 <div id="turnIndicator" class="turn-indicator turn-waiting">
-                    Waiting for your turn...
+                    Waiting for host to draw a card...
                 </div>
 
                 <div id="currentTurnInfo" class="current-turn-info" style="display: none;">
-                    It's <span id="currentPlayerName"></span>'s turn
+                    Current turn: <span id="currentPlayerName"></span>
                 </div>
 
-                <!-- Card Drawing Section -->
-                <div id="cardDrawSection" style="display: none;">
-                    <button id="drawCardBtn" class="button draw-card">🎴 Draw Card</button>
-                </div>
-
-                <!-- Card Display -->
-                <div id="cardDisplay" class="card-display" style="display: none;">
-                    <div class="card-type" id="cardType">Card Type</div>
-                    <div class="card-text" id="cardText">Card content will appear here</div>
-                    <div class="card-instruction">
-                        Choose your response based on your identity and experiences
+                <!-- Waiting for Card -->
+                <div id="waitingForCard" style="display: block;">
+                    <div style="text-align: center; padding: 20px; background: #f8f9fa; border-radius: 8px; margin: 20px 0;">
+                        <div style="font-size: 24px; margin-bottom: 10px;">⏳</div>
+                        <div style="font-size: 18px; color: #666;">Waiting for host to draw a card...</div>
                     </div>
-                    
-                    <div class="movement-buttons">
-                        <button id="moveForwardBtn" class="button move-forward">⬆️ Move Forward</button>
-                        <button id="moveBackwardBtn" class="button move-backward">⬇️ Move Backward</button>
+                </div>
+
+                <!-- Voting Section - ONLY Forward/Backward Options -->
+                <div id="votingSection" style="display: none;">
+                    <div style="text-align: center; padding: 20px; background: #e3f2fd; border-radius: 8px; margin: 20px 0;">
+                        <div style="font-size: 18px; margin-bottom: 15px; font-weight: bold;">A card has been drawn!</div>
+                        <div style="font-size: 14px; color: #666; margin-bottom: 20px;">
+                            The host has drawn a card. Based on your identity and experiences, choose your response:
+                        </div>
+                        
+                        <div class="movement-buttons" style="display: flex; gap: 15px; justify-content: center;">
+                            <button id="moveForwardBtn" class="button move-forward" style="flex: 1; max-width: 200px; padding: 15px;">
+                                ⬆️ Move Forward
+                            </button>
+                            <button id="moveBackwardBtn" class="button move-backward" style="flex: 1; max-width: 200px; padding: 15px;">
+                                ⬇️ Move Backward
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Vote Confirmed -->
+                <div id="voteConfirmed" style="display: none;">
+                    <div style="text-align: center; padding: 20px; background: #e8f5e8; border-radius: 8px; margin: 20px 0;">
+                        <div style="font-size: 24px; margin-bottom: 10px;">✅</div>
+                        <div style="font-size: 18px; color: #2e7d32; font-weight: bold;">Vote Submitted!</div>
+                        <div style="font-size: 14px; color: #666; margin-top: 10px;">
+                            Waiting for other players to vote...
+                        </div>
+                        <div id="voteChoice" style="font-size: 16px; margin-top: 10px; padding: 10px; background: #f1f8e9; border-radius: 4px;"></div>
                     </div>
                 </div>
 
@@ -619,9 +161,9 @@
             currentPlayer: null,
             gameStarted: false,
             gameLevel: 'basic',
-            isMyTurn: false,
-            currentCard: null,
-            cardCategories: ['privileges', 'social_policies', 'behaviors']
+            cardDrawn: false,
+            hasVoted: false,
+            myVote: null
         };
 
         // Available identity pawns
@@ -638,37 +180,6 @@
             { id: 'neutral', icon: '👤', label: 'Neutral', color: '#34495e' }
         ];
 
-        // Sample cards for different categories
-        const SAMPLE_CARDS = {
-            privileges: [
-                "You can easily find beauty products that match your skin tone.",
-                "You've never been followed by security in a store.",
-                "Your achievements are never questioned as diversity hires.",
-                "You can walk alone at night without fear.",
-                "Your name is never mispronounced or seen as 'difficult'.",
-                "You see people who look like you in leadership positions.",
-                "You've never been asked to speak for your entire race/group."
-            ],
-            social_policies: [
-                "A new accessibility law is passed requiring ramps in all buildings.",
-                "Healthcare becomes free for all citizens.",
-                "Marriage equality is legalized nationwide.",
-                "Anti-discrimination laws in employment are strengthened.",
-                "Public transportation becomes wheelchair accessible.",
-                "Mental health support is included in all health plans.",
-                "Educational funding is distributed more equally across districts."
-            ],
-            behaviors: [
-                "You interrupt others in meetings without being called aggressive.",
-                "You can express anger without being labeled as 'difficult'.",
-                "Your cultural holidays are recognized by your workplace/school.",
-                "You can make mistakes without them being attributed to your identity.",
-                "You receive mentorship and networking opportunities easily.",
-                "Your accent or way of speaking is considered 'professional'.",
-                "You can discuss your weekend activities without hiding your identity."
-            ]
-        };
-
         // DOM elements
         const joinForm = document.getElementById('joinForm');
         const playerNameInput = document.getElementById('playerName');
@@ -680,11 +191,12 @@
         const gameActive = document.getElementById('gameActive');
         const winnerAnnouncement = document.getElementById('winnerAnnouncement');
         const turnIndicator = document.getElementById('turnIndicator');
-        const cardDrawSection = document.getElementById('cardDrawSection');
-        const cardDisplay = document.getElementById('cardDisplay');
-        const drawCardBtn = document.getElementById('drawCardBtn');
+        const waitingForCard = document.getElementById('waitingForCard');
+        const votingSection = document.getElementById('votingSection');
+        const voteConfirmed = document.getElementById('voteConfirmed');
         const moveForwardBtn = document.getElementById('moveForwardBtn');
         const moveBackwardBtn = document.getElementById('moveBackwardBtn');
+        const voteChoice = document.getElementById('voteChoice');
 
         // Initialize pawn selector
         function initializePawnSelector() {
@@ -744,85 +256,63 @@
             }
         });
 
-        drawCardBtn.addEventListener('click', () => {
-            drawCard();
-        });
-
+        // ONLY Forward/Backward voting options
         moveForwardBtn.addEventListener('click', () => {
-            makeMove('forward');
+            makeVote('forward');
         });
 
         moveBackwardBtn.addEventListener('click', () => {
-            makeMove('backward');
+            makeVote('backward');
         });
 
-        // Card drawing function
-        function drawCard() {
-            const currentCategory = getCurrentCardCategory();
-            const cards = SAMPLE_CARDS[currentCategory];
-            const randomCard = cards[Math.floor(Math.random() * cards.length)];
+        // Make vote - ONLY forward or backward
+        function makeVote(direction) {
+            if (gameState.hasVoted) return;
             
-            gameState.currentCard = {
-                type: currentCategory,
-                text: randomCard
-            };
-
-            displayCard(gameState.currentCard);
-            cardDrawSection.style.display = 'none';
-            cardDisplay.style.display = 'block';
-
-            // Emit card drawn event
-            socket.emit('card-drawn', {
-                roomCode: gameState.roomCode,
-                playerId: gameState.playerData.id,
-                card: gameState.currentCard
-            });
-        }
-
-        // Get current card category based on game level and turn
-        function getCurrentCardCategory() {
-            if (gameState.gameLevel === 'basic') {
-                return 'privileges';
-            } else if (gameState.gameLevel === 'intermediate') {
-                // Alternate between privileges and social_policies
-                const playerIndex = gameState.players.findIndex(p => p.id === gameState.currentPlayer);
-                return playerIndex % 2 === 0 ? 'privileges' : 'social_policies';
-            } else { // advanced
-                // Cycle through all three categories
-                const playerIndex = gameState.players.findIndex(p => p.id === gameState.currentPlayer);
-                const categories = ['privileges', 'social_policies', 'behaviors'];
-                return categories[playerIndex % 3];
-            }
-        }
-
-        // Display card
-        function displayCard(card) {
-            const cardTypeElement = document.getElementById('cardType');
-            const cardTextElement = document.getElementById('cardText');
-            
-            const cardTypeNames = {
-                'privileges': 'Privileges/Discrimination Card',
-                'social_policies': 'Social Policies Card',
-                'behaviors': 'Behaviors Card'
-            };
-            
-            cardTypeElement.textContent = cardTypeNames[card.type] || 'Card';
-            cardTextElement.textContent = card.text;
-        }
-
-        // Make move
-        function makeMove(direction) {
-            socket.emit('player-move', {
-                roomCode: gameState.roomCode,
-                playerId: gameState.playerData.id,
+            const vote = {
                 direction: direction,
-                card: gameState.currentCard
-            });
+                description: direction === 'forward' ? 'Move Forward' : 'Move Backward'
+            };
+            
+            socket.emit('player-vote', vote);
+            
+            // Update UI
+            gameState.hasVoted = true;
+            gameState.myVote = vote;
+            
+            // Hide voting section, show confirmation
+            votingSection.style.display = 'none';
+            voteConfirmed.style.display = 'block';
+            voteChoice.textContent = `You chose: ${vote.description}`;
+            
+            // Disable buttons
+            moveForwardBtn.disabled = true;
+            moveBackwardBtn.disabled = true;
+        }
 
-            // Hide card and movement buttons
-            cardDisplay.style.display = 'none';
-            gameState.isMyTurn = false;
-            updateTurnDisplay();
+        // Update display based on game state
+        function updateGameDisplay() {
+            if (!gameState.gameStarted) return;
+            
+            if (gameState.cardDrawn && !gameState.hasVoted) {
+                // Show voting options
+                waitingForCard.style.display = 'none';
+                votingSection.style.display = 'block';
+                voteConfirmed.style.display = 'none';
+                turnIndicator.textContent = 'Card drawn - make your choice!';
+            } else if (gameState.hasVoted) {
+                // Show vote confirmation
+                waitingForCard.style.display = 'none';
+                votingSection.style.display = 'none';
+                voteConfirmed.style.display = 'block';
+                turnIndicator.textContent = 'Waiting for other players to vote...';
+            } else {
+                // Waiting for card
+                waitingForCard.style.display = 'block';
+                votingSection.style.display = 'none';
+                voteConfirmed.style.display = 'none';
+                turnIndicator.textContent = 'Waiting for host to draw a card...';
+            }
         }
 
         // Socket events
@@ -840,19 +330,12 @@
 
         socket.on('join-error', (error) => {
             showStatus(error, 'error');
-            
-            // If pawn is taken, refresh available pawns
-            if (error.includes('already taken')) {
-                // Could implement pawn refresh here
-            }
         });
 
         socket.on('room-updated', (data) => {
             gameState.players = data.players;
             gameState.gameLevel = data.gameLevel || 'basic';
             updateOtherPlayersDisplay();
-            
-            // Update available pawns
             updateAvailablePawns(data.availablePawns);
         });
 
@@ -861,27 +344,38 @@
             gameState.currentPlayer = data.currentPlayer;
             gameState.gameLevel = data.gameLevel || 'basic';
             gameState.players = data.players;
+            gameState.cardDrawn = false;
+            gameState.hasVoted = false;
             
             waitingRoom.style.display = 'none';
             gameActive.style.display = 'block';
             
-            updateGameDisplay();
+            updateGamePlayerDisplay();
             updateDifficultyDisplay();
-            updateTurnDisplay();
-        });
-
-        socket.on('turn-changed', (data) => {
-            gameState.currentPlayer = data.currentPlayer;
-            gameState.players = data.players;
-            updateTurnDisplay();
             updateGameDisplay();
         });
 
-        socket.on('player-moved', (data) => {
-            gameState.players = data.players;
-            gameState.currentPlayer = data.nextPlayer;
+        socket.on('card-drawn', (data) => {
+            gameState.cardDrawn = true;
+            gameState.hasVoted = false;
+            gameState.myVote = null;
+            
+            // Reset buttons
+            moveForwardBtn.disabled = false;
+            moveBackwardBtn.disabled = false;
+            
             updateGameDisplay();
-            updateTurnDisplay();
+        });
+
+        socket.on('all-votes-received', (data) => {
+            gameState.players = data.players;
+            gameState.cardDrawn = false;
+            gameState.hasVoted = false;
+            gameState.myVote = null;
+            
+            updateGamePlayerDisplay();
+            updateOtherPlayersDisplay();
+            updateGameDisplay();
             
             if (data.winner) {
                 showWinner(data.winner);
@@ -908,7 +402,6 @@
             }, 5000);
         }
 
-
         function updatePlayerDisplay() {
             if (gameState.playerData) {
                 const pawn = IDENTITY_PAWNS.find(p => p.id === gameState.playerData.pawnId);
@@ -920,30 +413,7 @@
             }
         }
 
-        function updateOtherPlayersDisplay() {
-            const otherPlayers = gameState.players.filter(p => p.id !== gameState.playerData?.id);
-            document.getElementById('otherPlayerCount').textContent = otherPlayers.length;
-            
-            const otherPlayersList = document.getElementById('otherPlayersList');
-            otherPlayersList.innerHTML = '';
-            
-            otherPlayers.forEach(player => {
-                const pawn = IDENTITY_PAWNS.find(p => p.id === player.pawnId);
-                const playerElement = document.createElement('div');
-                playerElement.className = 'other-player';
-                playerElement.innerHTML = `
-                    <div class="other-player-pawn">${pawn ? pawn.icon : '👤'}</div>
-                    <div class="player-details">
-                        <div class="player-name">${player.name}</div>
-                        <div class="player-position">Ring: ${player.position}</div>
-                    </div>
-                `;
-                otherPlayersList.appendChild(playerElement);
-            });
-        }
-
-        function updateGameDisplay() {
-            // Update current player info
+        function updateGamePlayerDisplay() {
             const currentPlayerData = gameState.players.find(p => p.id === gameState.playerData?.id);
             if (currentPlayerData) {
                 const pawn = IDENTITY_PAWNS.find(p => p.id === currentPlayerData.pawnId);
@@ -953,25 +423,49 @@
                     document.getElementById('gamePlayerPosition').textContent = currentPlayerData.position;
                 }
             }
-            
-            // Update other players in game view
+        }
+
+        function updateOtherPlayersDisplay() {
             const otherPlayers = gameState.players.filter(p => p.id !== gameState.playerData?.id);
-            const gameOtherPlayersList = document.getElementById('gameOtherPlayersList');
-            gameOtherPlayersList.innerHTML = '';
+            document.getElementById('otherPlayerCount').textContent = otherPlayers.length;
             
-            otherPlayers.forEach(player => {
-                const pawn = IDENTITY_PAWNS.find(p => p.id === player.pawnId);
-                const playerElement = document.createElement('div');
-                playerElement.className = 'other-player';
-                playerElement.innerHTML = `
-                    <div class="other-player-pawn">${pawn ? pawn.icon : '👤'}</div>
-                    <div class="player-details">
-                        <div class="player-name">${player.name}</div>
-                        <div class="player-position">Ring: ${player.position}</div>
-                    </div>
-                `;
-                gameOtherPlayersList.appendChild(playerElement);
-            });
+            // Update waiting room list
+            const otherPlayersList = document.getElementById('otherPlayersList');
+            if (otherPlayersList) {
+                otherPlayersList.innerHTML = '';
+                otherPlayers.forEach(player => {
+                    const pawn = IDENTITY_PAWNS.find(p => p.id === player.pawnId);
+                    const playerElement = document.createElement('div');
+                    playerElement.className = 'other-player';
+                    playerElement.innerHTML = `
+                        <div class="other-player-pawn">${pawn ? pawn.icon : '👤'}</div>
+                        <div class="player-details">
+                            <div class="player-name">${player.name}</div>
+                            <div class="player-position">Ring: ${player.position}</div>
+                        </div>
+                    `;
+                    otherPlayersList.appendChild(playerElement);
+                });
+            }
+            
+            // Update game view list
+            const gameOtherPlayersList = document.getElementById('gameOtherPlayersList');
+            if (gameOtherPlayersList) {
+                gameOtherPlayersList.innerHTML = '';
+                otherPlayers.forEach(player => {
+                    const pawn = IDENTITY_PAWNS.find(p => p.id === player.pawnId);
+                    const playerElement = document.createElement('div');
+                    playerElement.className = 'other-player';
+                    playerElement.innerHTML = `
+                        <div class="other-player-pawn">${pawn ? pawn.icon : '👤'}</div>
+                        <div class="player-details">
+                            <div class="player-name">${player.name}</div>
+                            <div class="player-position">Ring: ${player.position}</div>
+                        </div>
+                    `;
+                    gameOtherPlayersList.appendChild(playerElement);
+                });
+            }
         }
 
         function updateDifficultyDisplay() {
@@ -985,25 +479,6 @@
             };
             
             difficultyBadge.textContent = levelNames[gameState.gameLevel] || 'Basic Level';
-        }
-
-        function showCardInfo(cardType) {
-            const cardInfo = document.getElementById('cardInfo');
-            const cardTypeElement = document.getElementById('cardType');
-            
-            const cardTypes = {
-                'privileges': 'Privileges/Discrimination Card',
-                'social_policies': 'Social Policies Card',
-                'behaviors': 'Behaviors Card'
-            };
-            
-            cardTypeElement.textContent = cardTypes[cardType] || 'Card Drawn';
-            cardInfo.style.display = 'block';
-            
-            // Hide after 5 seconds
-            setTimeout(() => {
-                cardInfo.style.display = 'none';
-            }, 5000);
         }
 
         function updateAvailablePawns(availablePawns) {

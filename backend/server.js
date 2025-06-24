@@ -54,6 +54,8 @@ class GameRoom {
       15: { name: 'Pandemic', description: 'Pandemic event - follow special instructions' },
       20: { name: 'Social Movement', description: 'Social movement - follow special instructions' }
     };
+    this.currentCard = null; // Track the current card
+    this.playerDecisions = {}; // Track player decisions for the current card
   }
 
   addPlayer(socketId, playerData) {
@@ -161,9 +163,62 @@ class GameRoom {
   }
 }
 
+
 io.on('connection', (socket) => {
   console.log('New connection:', socket.id);
 
+  // Player makes a move (update this event handler)
+  socket.on('player-move', (data) => {
+    const roomId = gameRooms.get(socket.id);
+    const room = gameRooms.get(roomId);
+    
+    if (!room || !room.gameStarted) {
+      socket.emit('error', 'Game not active');
+      return;
+    }
+
+    const player = room.players.get(socket.id);
+    const currentPlayer = room.getCurrentPlayer();
+    
+    if (!player || player.id !== currentPlayer.id) {
+      socket.emit('error', 'Not your turn');
+      return;
+    }
+
+    // Determine movement based on direction
+    const steps = data.direction === 'forward' ? -1 : 1; // negative moves toward center (position 1)
+    const newPosition = room.movePlayer(socket.id, steps);
+    
+    // Move to next player
+    room.nextPlayer();
+    const nextPlayer = room.getCurrentPlayer();
+    
+    // Check for winner
+    const winner = room.checkWinner();
+    
+    // Broadcast the move result
+    io.to(roomId).emit('player-moved', {
+      player: player,
+      newPosition: newPosition,
+      players: room.getPlayersArray(),
+      nextPlayer: nextPlayer,
+      winner: winner,
+      card: data.card
+    });
+
+    if (winner) {
+      io.to(roomId).emit('game-ended', { winner: winner });
+      console.log(`Game ended in room ${roomId}. Winner: ${winner.name}`);
+    } else {
+      // Notify about turn change
+      io.to(roomId).emit('turn-changed', {
+        currentPlayer: nextPlayer.id,
+        players: room.getPlayersArray()
+      });
+    }
+
+    console.log(`Player ${player.name} moved ${data.direction} to position ${newPosition}. Next player: ${nextPlayer.name}`);
+  });
   // Host creates a room
   socket.on('create-room', () => {
     const room = new GameRoom(socket.id);
@@ -259,67 +314,114 @@ io.on('connection', (socket) => {
     console.log(`Game started in room ${roomId} with ${room.players.size} players at ${gameLevel} level`);
   });
 
-  // Host draws a card
+  // Draw card event: only host can draw
   socket.on('draw-card', (cardData) => {
     const roomId = gameRooms.get(socket.id);
     const room = gameRooms.get(roomId);
-    
-    if (!room || room.hostSocketId !== socket.id) {
-      socket.emit('error', 'Not authorized');
+    if (!room || !room.gameStarted) {
+      socket.emit('error', 'Game not active');
       return;
     }
-
-    const currentPlayer = room.getCurrentPlayer();
-    if (!currentPlayer) return;
-
+    // Only the host can draw a card
+    if (room.hostSocketId !== socket.id) {
+      socket.emit('error', 'Only the host can draw a card');
+      return;
+    }
     // Check if card type matches expected type
     const expectedCardType = room.getNextCardType();
     if (cardData.category !== expectedCardType) {
       socket.emit('error', `Expected ${expectedCardType} card, but got ${cardData.category}`);
       return;
     }
-
-    // Check for event if player lands on event ring
-    let eventTriggered = null;
-    const playersOnEventRings = [];
-    
-    // For advanced level, check if any player lands on event ring
-    if (room.gameLevel === 'advanced') {
-      room.getPlayersArray().forEach(player => {
-        if (room.isOnEventRing(player.position)) {
-          const event = room.getEventForRing(player.position);
-          if (event) {
-            playersOnEventRings.push({
-              player: player,
-              event: event
-            });
-          }
-        }
-      });
-    }
-
-    // Move to next player and increment card draw order
-    room.nextPlayer();
-    room.cardDrawOrder++;
-
-    // Check for winner
-    const winner = room.checkWinner();
-    
-    // Broadcast updates
+    // Set current card and reset player decisions
+    room.currentCard = cardData;
+    room.playerDecisions = {};
+    // Broadcast card to all clients (including host)
     io.to(roomId).emit('card-drawn', {
       card: cardData,
-      cardDrawnBy: currentPlayer,
-      winner: winner,
+      cardDrawnBy: { id: room.hostSocketId, name: 'Host' },
+      winner: room.checkWinner(),
       nextPlayer: room.getCurrentPlayer(),
       nextCardType: room.getNextCardType(),
       allPlayers: room.getPlayersArray(),
-      eventsTriggered: playersOnEventRings,
+      eventsTriggered: [],
       cardType: cardData.category
     });
+  });
 
-    if (winner) {
-      io.to(roomId).emit('game-ended', { winner: winner });
-      console.log(`Game ended in room ${roomId}. Winner: ${winner.name} (${winner.identityName})`);
+  // Player submits their decision for the current card
+  socket.on('player-decision', (data) => {
+    const roomId = gameRooms.get(socket.id);
+    const room = gameRooms.get(roomId);
+    if (!room || !room.gameStarted) {
+      socket.emit('error', 'Game not active');
+      return;
+    }
+    if (!room.currentCard) {
+      socket.emit('error', 'No card drawn');
+      return;
+    }
+    // Only allow players (not host) to make decisions
+    if (socket.id === room.hostSocketId) {
+      socket.emit('error', 'Host cannot make a decision');
+      return;
+    }
+    // Record the player's decision (steps: +1, -1, etc.)
+    room.playerDecisions[socket.id] = data.steps;
+    // Notify all clients of the updated decisions
+    io.to(roomId).emit('player-decision', {
+      playerId: socket.id,
+      decision: data.steps
+    });
+    // If all players (not host) have made a decision, process moves
+    const playerCount = room.getPlayersArray().length;
+    const nonHostPlayerCount = room.getPlayersArray().filter(p => p.id !== room.hostSocketId).length;
+    if (Object.keys(room.playerDecisions).length === nonHostPlayerCount) {
+      // Update all player positions
+      for (const [playerId, steps] of Object.entries(room.playerDecisions)) {
+        room.movePlayer(playerId, steps);
+      }
+      // Check for winner
+      const winner = room.checkWinner();
+      // For advanced level, check for events
+      let playersOnEventRings = [];
+      if (room.gameLevel === 'advanced') {
+        room.getPlayersArray().forEach(player => {
+          if (room.isOnEventRing(player.position)) {
+            const event = room.getEventForRing(player.position);
+            if (event) {
+              playersOnEventRings.push({
+                player: player,
+                event: event
+              });
+            }
+          }
+        });
+      }
+      // Prepare for next round
+      room.nextPlayer();
+      room.cardDrawOrder++;
+      // Broadcast all moves and next turn
+      io.to(roomId).emit('all-decisions-made', {
+        allPlayers: room.getPlayersArray(),
+        nextPlayer: room.getCurrentPlayer(),
+        nextCardType: room.getNextCardType(),
+        winner: winner,
+        eventsTriggered: playersOnEventRings
+      });
+      // If winner, end game
+      if (winner) {
+        io.to(roomId).emit('game-ended', { winner: winner });
+      }
+      // Reset for next card and allow host to draw next card
+      room.currentCard = null;
+      room.playerDecisions = {};
+      // Notify host that next card can be drawn
+      io.to(room.hostSocketId).emit('ready-for-next-card', {
+        nextCardType: room.getNextCardType(),
+        nextPlayer: room.getCurrentPlayer(),
+        allPlayers: room.getPlayersArray()
+      });
     }
   });
 
@@ -388,6 +490,22 @@ io.on('connection', (socket) => {
       });
     }
   });
+
+  // Host proceeds to next turn after all decisions made
+  socket.on('proceed-to-next-turn', () => {
+    const roomId = gameRooms.get(socket.id);
+    const room = gameRooms.get(roomId);
+    if (!room || room.hostSocketId !== socket.id) {
+      socket.emit('error', 'Not authorized to proceed to next turn');
+      return;
+    }
+    // Notify all clients to start the next turn (show card drawing phase, update turn, etc.)
+    io.to(roomId).emit('turn-ended', {
+      nextPlayer: room.getCurrentPlayer(),
+      nextCardType: room.getNextCardType(),
+      playerDecisions: {},
+    });
+  });
 });
 
 const PORT = process.env.PORT || 3000;
@@ -396,3 +514,4 @@ server.listen(PORT, () => {
   console.log(`Host interface: http://localhost:${PORT}/host`);
   console.log(`Player interface: http://localhost:${PORT}/player`);
 });
+

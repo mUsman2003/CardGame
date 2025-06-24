@@ -4,297 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Spiral Board Game - Host</title>
+    <link rel="stylesheet" href="styles.css">
     <script src="/socket.io/socket.io.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .container {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            padding: 2rem;
-            max-width: 1200px;
-            width: 95%;
-            margin: 20px;
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-
-        .header h1 {
-            color: #333;
-            font-size: 2.5rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .room-setup {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-
-        .room-code {
-            background: #f8f9fa;
-            border: 2px dashed #6c757d;
-            border-radius: 10px;
-            padding: 1rem;
-            margin: 1rem 0;
-            font-size: 2rem;
-            font-weight: bold;
-            color: #495057;
-            letter-spacing: 3px;
-        }
-
-        .button {
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            border-radius: 25px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin: 0.5rem;
-        }
-
-        .button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-
-        .button:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .players-section {
-            margin: 2rem 0;
-        }
-
-        .players-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-
-        .player-card {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 1rem;
-            text-align: center;
-            border-left: 4px solid;
-        }
-
-        .player-name {
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 0.5rem;
-        }
-
-        .player-identity {
-            color: #666;
-            font-size: 0.9rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .player-position {
-            color: #666;
-            font-size: 0.9rem;
-        }
-
-        .game-board {
-            display: none;
-            margin: 2rem 0;
-        }
-
-        .spiral-board {
-            width: 600px;
-            height: 600px;
-            position: relative;
-            margin: 0 auto;
-            background: radial-gradient(circle, #fff 0%, #f0f0f0 100%);
-            border-radius: 50%;
-            border: 3px solid #333;
-        }
-
-        .ring {
-            position: absolute;
-            border: 2px solid #ddd;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .ring.event-ring {
-            border-color: #ff6b6b;
-            background: rgba(255, 107, 107, 0.1);
-        }
-
-        .ring-number {
-            position: absolute;
-            top: -15px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: white;
-            padding: 2px 6px;
-            border-radius: 10px;
-            font-size: 12px;
-            font-weight: bold;
-        }
-
-        .pawn {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            border: 2px solid #fff;
-            position: absolute;
-            transition: all 0.5s ease;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-        }
-
-        .game-controls {
-            text-align: center;
-            margin: 2rem 0;
-        }
-
-        .current-player {
-            background: #e3f2fd;
-            border: 2px solid #2196f3;
-            border-radius: 10px;
-            padding: 1rem;
-            margin: 1rem 0;
-            text-align: center;
-        }
-
-        .card-section {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 1.5rem;
-            margin: 1rem 0;
-        }
-
-        .card-type-indicator {
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
-            border-radius: 10px;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            text-align: center;
-            font-weight: bold;
-            font-size: 1.1rem;
-        }
-
-        .card-category {
-            display: flex;
-            gap: 1rem;
-            margin: 1rem 0;
-        }
-
-        .card-category button {
-            flex: 1;
-        }
-
-        .privilege { background: linear-gradient(45deg, #4caf50, #66bb6a); }
-        .discrimination { background: linear-gradient(45deg, #f44336, #ef5350); }
-        .social-policy { background: linear-gradient(45deg, #ff9800, #ffb74d); }
-        .behavior { background: linear-gradient(45deg, #9c27b0, #ba68c8); }
-
-        .game-level {
-            margin: 1rem 0;
-        }
-
-        .level-select {
-            padding: 8px 15px;
-            border-radius: 20px;
-            border: 2px solid #ddd;
-            font-size: 1rem;
-            margin: 0 0.5rem;
-        }
-
-        .winner-announcement {
-            background: linear-gradient(45deg, #ffd700, #ffed4a);
-            border-radius: 15px;
-            padding: 2rem;
-            text-align: center;
-            margin: 2rem 0;
-            display: none;
-        }
-
-        .winner-announcement h2 {
-            color: #333;
-            font-size: 2rem;
-            margin-bottom: 1rem;
-        }
-
-        .event-notification {
-            background: #ffebee;
-            border: 2px solid #f44336;
-            border-radius: 10px;
-            padding: 1rem;
-            margin: 1rem 0;
-            text-align: center;
-            display: none;
-        }
-
-        .event-notification.show {
-            display: block;
-            animation: pulse 1s ease-in-out;
-        }
-
-        .last-card-drawn {
-            background: #e8f5e8;
-            border: 2px solid #4caf50;
-            border-radius: 10px;
-            padding: 1rem;
-            margin: 1rem 0;
-            text-align: center;
-            display: none;
-        }
-
-        .last-card-drawn.show {
-            display: block;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 1rem;
-                margin: 10px;
-            }
-            
-            .spiral-board {
-                width: 400px;
-                height: 400px;
-            }
-            
-            .header h1 {
-                font-size: 2rem;
-            }
-        }
-    </style>
 </head>
 <body>
     <div class="container">
@@ -339,53 +50,39 @@
         <div id="game-controls" class="game-controls" style="display: none;">
             <div id="currentPlayer" class="current-player">
                 <h3>Current Player: <span id="currentPlayerName">-</span></h3>
-                <p>Draw a card and apply its effect</p>
+                <p id="currentPlayerStatus">Waiting for player to draw a card...</p>
             </div>
 
-            <div id="lastCardDrawn" class="last-card-drawn">
-                <h4>Last Card Drawn:</h4>
-                <p id="lastCardText"></p>
+            <!-- Card Drawn Display -->
+            <div id="cardDrawnDisplay" class="card-drawn-display">
+                <h3>🎴 Card Drawn!</h3>
+                <div id="cardDescription" class="card-description"></div>
+                <p>All players must now make their decisions...</p>
             </div>
 
-            <div class="card-section">
-                <div class="card-type-indicator">
-                    Next Card Type: <span id="nextCardType">Privilege/Discrimination</span>
+            <!-- Decision Phase -->
+            <div id="decisionPhase" class="decision-phase">
+                <h3>⏳ Waiting for All Players to Decide</h3>
+                <div class="progress-indicator">
+                    <div id="decisionProgress">Decisions: <span id="decisionsCount">0</span> / <span id="totalPlayers">0</span></div>
+                    <div class="progress-bar">
+                        <div id="progressFill" class="progress-fill" style="width: 0%"></div>
+                    </div>
                 </div>
-
-                <!-- Privilege/Discrimination Cards -->
-                <div id="privilegeDiscriminationCards" class="card-category">
-                    <button class="button privilege" onclick="drawCard('privilege-discrimination', 2, 'Privilege')">
-                        Privilege Card (+2)
-                    </button>
-                    <button class="button discrimination" onclick="drawCard('privilege-discrimination', -1, 'Discrimination')">
-                        Discrimination Card (-1)
-                    </button>
-                </div>
-
-                <!-- Social Policy Cards -->
-                <div id="socialPolicyCards" class="card-category" style="display: none;">
-                    <button class="button social-policy" onclick="drawCard('social-policies', 1, 'Progressive Policy')">
-                        Progressive Policy (+1)
-                    </button>
-                    <button class="button social-policy" onclick="drawCard('social-policies', -2, 'Regressive Policy')">
-                        Regressive Policy (-2)
-                    </button>
-                </div>
-
-                <!-- Behavior Cards -->
-                <div id="behaviorCards" class="card-category" style="display: none;">
-                    <button class="button behavior" onclick="drawCard('behaviors', 1, 'Positive Behavior')">
-                        Positive Behavior (+1)
-                    </button>
-                    <button class="button behavior" onclick="drawCard('behaviors', -1, 'Negative Behavior')">
-                        Negative Behavior (-1)
-                    </button>
-                </div>
+                <div id="playerDecisions" class="player-decisions"></div>
+                <button id="proceedBtn" class="button" onclick="proceedToNextTurn()" style="display: none;">
+                    Proceed to Next Turn
+                </button>
             </div>
 
             <div id="eventNotification" class="event-notification">
                 <h4>Event Triggered!</h4>
                 <p id="eventText"></p>
+            </div>
+
+            <!-- Add Draw Card Button to game-controls -->
+            <div id="hostDrawCardSection" style="display:none; margin: 1.5rem 0; text-align:center;">
+                <button id="hostDrawCardBtn" class="button" style="font-size:1.2rem;">🎴 Draw Card</button>
             </div>
         </div>
 
@@ -404,7 +101,10 @@
             gameStarted: false,
             gameLevel: 'basic',
             currentPlayer: null,
-            nextCardType: 'privilege-discrimination'
+            nextCardType: 'privilege-discrimination',
+            phase: 'waiting', // 'waiting', 'card-drawn', 'decisions', 'moving'
+            currentCard: null,
+            playerDecisions: {}
         };
 
         // DOM elements
@@ -418,18 +118,63 @@
         const gameBoard = document.getElementById('game-board');
         const gameControls = document.getElementById('game-controls');
         const currentPlayerName = document.getElementById('currentPlayerName');
+        const currentPlayerStatus = document.getElementById('currentPlayerStatus');
         const nextCardType = document.getElementById('nextCardType');
         const winnerAnnouncement = document.getElementById('winner-announcement');
         const winnerText = document.getElementById('winnerText');
         const eventNotification = document.getElementById('eventNotification');
         const eventText = document.getElementById('eventText');
-        const lastCardDrawn = document.getElementById('lastCardDrawn');
-        const lastCardText = document.getElementById('lastCardText');
+
+        // Phase elements
+        const cardDrawingPhase = document.getElementById('cardDrawingPhase');
+        const cardDrawnDisplay = document.getElementById('cardDrawnDisplay');
+        const cardDescription = document.getElementById('cardDescription');
+        const decisionPhase = document.getElementById('decisionPhase');
+        const playerDecisions = document.getElementById('playerDecisions');
+        const decisionsCount = document.getElementById('decisionsCount');
+        const totalPlayers = document.getElementById('totalPlayers');
+        const progressFill = document.getElementById('progressFill');
+        const proceedBtn = document.getElementById('proceedBtn');
 
         // Card category elements
         const privilegeDiscriminationCards = document.getElementById('privilegeDiscriminationCards');
         const socialPolicyCards = document.getElementById('socialPolicyCards');
         const behaviorCards = document.getElementById('behaviorCards');
+
+        // Add Draw Card Button to game-controls
+        const hostDrawCardSection = document.getElementById('hostDrawCardSection');
+        const hostDrawCardBtn = document.getElementById('hostDrawCardBtn');
+
+        // Card samples for host to draw from
+        const HOST_SAMPLE_CARDS = {
+            'privilege-discrimination': [
+                'You can easily find beauty products that match your skin tone.',
+                'You have never been followed by security in a store.',
+                'Your achievements are never questioned as diversity hires.',
+                'You can walk alone at night without fear.',
+                'Your name is never mispronounced or seen as difficult.',
+                'You see people who look like you in leadership positions.',
+                'You have never been asked to speak for your entire race/group.'
+            ],
+            'social-policies': [
+                'A new accessibility law is passed requiring ramps in all buildings.',
+                'Healthcare becomes free for all citizens.',
+                'Marriage equality is legalized nationwide.',
+                'Anti-discrimination laws in employment are strengthened.',
+                'Public transportation becomes wheelchair accessible.',
+                'Mental health support is included in all health plans.',
+                'Educational funding is distributed more equally across districts.'
+            ],
+            'behaviors': [
+                'You interrupt others in meetings without being called aggressive.',
+                'You can express anger without being labeled as difficult.',
+                'Your cultural holidays are recognized by your workplace/school.',
+                'You can make mistakes without them being attributed to your identity.',
+                'You receive mentorship and networking opportunities easily.',
+                'Your accent or way of speaking is considered professional.',
+                'You can discuss your weekend activities without hiding your identity.'
+            ]
+        };
 
         // Create room
         createRoomBtn.addEventListener('click', () => {
@@ -463,6 +208,7 @@
             gameState.gameLevel = data.gameLevel;
             gameState.currentPlayer = data.currentPlayer;
             gameState.nextCardType = data.nextCardType;
+            gameState.phase = 'waiting';
             
             gameBoard.style.display = 'block';
             gameControls.style.display = 'block';
@@ -471,36 +217,66 @@
             updateCurrentPlayer(data.currentPlayer);
             updateCardInterface();
             updatePlayerPositions();
+            updatePhaseDisplay();
+            showHostDrawCardButton(data.nextCardType);
         });
 
         socket.on('card-drawn', (data) => {
-            // Update game state
+            gameState.currentCard = data.card;
+            gameState.phase = 'decisions';
+            gameState.playerDecisions = {};
+            // Show card drawn on host
+            cardDrawnDisplay.classList.add('show');
+            cardDescription.innerHTML = `
+                <strong>${data.card.cardType || data.card.category || ''}</strong><br>
+                ${data.card.description || data.card.text || `Move ${data.card.steps > 0 ? 'forward' : 'backward'} ${Math.abs(data.card.steps)} ring${Math.abs(data.card.steps) !== 1 ? 's' : ''}`}
+            `;
+            updatePhaseDisplay();
+            updateDecisionProgress();
+            updateCurrentPlayer(data.cardDrawnBy);
+            hideHostDrawCardButton();
+        });
+
+        socket.on('player-decision', (data) => {
+            // Update progress bar and player decision display
+            gameState.playerDecisions[data.playerId] = data.decision;
+            updateDecisionProgress();
+            updatePlayerDecisionDisplay();
+        });
+
+        socket.on('all-decisions-made', (data) => {
+            gameState.phase = 'moving';
             gameState.players = data.allPlayers;
             gameState.currentPlayer = data.nextPlayer;
             gameState.nextCardType = data.nextCardType;
-            
-            // Show last card drawn
-            showLastCardDrawn(data.card, data.cardDrawnBy);
-            
             // Update player positions
             updatePlayerPositions();
-            
             // Show events if triggered
             if (data.eventsTriggered && data.eventsTriggered.length > 0) {
                 showEventNotification(data.eventsTriggered);
             }
-            
             // Check for winner
             if (data.winner) {
                 showWinner(data.winner);
             } else {
-                updateCurrentPlayer(data.nextPlayer);
-                updateCardInterface();
+                // Show proceed button
+                proceedBtn.style.display = 'block';
             }
+            updateCurrentPlayer(data.nextPlayer);
+            // Host waits for ready-for-next-card event to re-enable draw
+        });
+
+        socket.on('turn-ended', (data) => {
+            gameState.phase = 'waiting';
+            gameState.currentPlayer = data.nextPlayer;
+            gameState.nextCardType = data.nextCardType;
+            gameState.playerDecisions = {};
+            updateCurrentPlayer(data.nextPlayer);
+            updateCardInterface();
+            updatePhaseDisplay();
         });
 
         socket.on('player-moved', (data) => {
-            // Update player positions when a player moves
             gameState.players = data.allPlayers;
             updatePlayerPositions();
             updatePlayersDisplay();
@@ -519,6 +295,11 @@
             alert('Error: ' + error);
         });
 
+        socket.on('ready-for-next-card', (data) => {
+            gameState.nextCardType = data.nextCardType;
+            showHostDrawCardButton(data.nextCardType);
+        });
+
         // Functions
         function updatePlayersDisplay() {
             playersGrid.innerHTML = '';
@@ -528,10 +309,22 @@
                 const playerCard = document.createElement('div');
                 playerCard.className = 'player-card';
                 playerCard.style.borderLeftColor = player.color;
+                
+                // Add status indicators during decision phase
+                let statusHTML = '';
+                if (gameState.phase === 'decisions') {
+                    const hasDecided = gameState.playerDecisions[player.id] !== undefined;
+                    playerCard.classList.add(hasDecided ? 'decided' : 'waiting');
+                    statusHTML = `<div style="padding: 5px; font-size: 12px; color: ${hasDecided ? '#27ae60' : '#f39c12'}; font-weight: bold;">
+                        ${hasDecided ? '✓ Decision Made' : '⏳ Waiting...'}
+                    </div>`;
+                }
+                
                 playerCard.innerHTML = `
                     <div class="player-name">${player.name}</div>
                     <div class="player-identity">${player.identityName} ${player.icon}</div>
                     <div class="player-position">Ring: ${player.position}</div>
+                    ${statusHTML}
                 `;
                 playersGrid.appendChild(playerCard);
             });
@@ -628,6 +421,72 @@
             behaviorCards.style.display = gameState.nextCardType === 'behaviors' ? 'flex' : 'none';
         }
 
+        function updatePhaseDisplay() {
+            // Hide all phase displays
+            cardDrawingPhase.style.display = 'none';
+            cardDrawnDisplay.classList.remove('show');
+            decisionPhase.classList.remove('show');
+            proceedBtn.style.display = 'none';
+            
+            switch (gameState.phase) {
+                case 'waiting':
+                    currentPlayerStatus.textContent = 'Waiting for player to draw a card...';
+                    break;
+                case 'decisions':
+                    cardDrawnDisplay.classList.add('show');
+                    decisionPhase.classList.add('show');
+                    currentPlayerStatus.textContent = 'Card drawn - waiting for all players to decide';
+                    break;
+                case 'moving':
+                    currentPlayerStatus.textContent = 'All players have decided - processing moves';
+                    break;
+            }
+            updatePlayersDisplay();
+        }
+
+        function updateDecisionProgress() {
+            const totalPlayerCount = gameState.players.length;
+            const decisionsReceived = Object.keys(gameState.playerDecisions).length;
+            
+            decisionsCount.textContent = decisionsReceived;
+            totalPlayers.textContent = totalPlayerCount;
+            
+            const percentage = totalPlayerCount > 0 ? (decisionsReceived / totalPlayerCount) * 100 : 0;
+            progressFill.style.width = `${percentage}%`;
+        }
+
+        function updatePlayerDecisionDisplay() {
+            playerDecisions.innerHTML = '';
+            
+            gameState.players.forEach(player => {
+                const decision = gameState.playerDecisions[player.id];
+                const playerDiv = document.createElement('div');
+                playerDiv.style.cssText = `
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 10px;
+                    margin: 5px 0;
+                    border-left: 4px solid ${player.color};
+                    background: ${decision ? '#f8f9fa' : '#fff3cd'};
+                    border-radius: 5px;
+                `;
+                
+                playerDiv.innerHTML = `
+                    <div>
+                        <div style="font-weight: bold;">${player.name}</div>
+                        <div style="font-size: 12px; color: #666;">${player.identityName}</div>
+                        ${decision ? `<div style="color: #27ae60; font-size: 12px; margin-top: 2px;">${decision.description}</div>` : '<div style="color: #856404; font-size: 12px;">Waiting for decision...</div>'}
+                    </div>
+                    <div style="font-size: 20px;">
+                        ${decision ? (decision.direction === 'forward' ? '⬆️' : '⬇️') : '⏳'}
+                    </div>
+                `;
+                
+                playerDecisions.appendChild(playerDiv);
+            });
+        }
+
         function drawCard(category, steps, cardType) {
             const cardData = {
                 category: category,
@@ -639,13 +498,8 @@
             socket.emit('draw-card', cardData);
         }
 
-        function showLastCardDrawn(card, player) {
-            lastCardText.innerHTML = `<strong>${player.name}</strong> drew: <strong>${card.cardType}</strong> (${card.steps > 0 ? '+' : ''}${card.steps} rings)`;
-            lastCardDrawn.classList.add('show');
-            
-            setTimeout(() => {
-                lastCardDrawn.classList.remove('show');
-            }, 5000);
+        function proceedToNextTurn() {
+            socket.emit('proceed-to-next-turn');
         }
 
         function showEventNotification(events) {
@@ -665,6 +519,32 @@
             winnerAnnouncement.style.display = 'block';
             gameControls.style.display = 'none';
         }
+
+        function showHostDrawCardButton(cardType) {
+            hostDrawCardSection.style.display = 'block';
+            hostDrawCardBtn.disabled = false;
+            hostDrawCardBtn.textContent = `🎴 Draw ${cardType.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())} Card`;
+        }
+
+        function hideHostDrawCardButton() {
+            hostDrawCardSection.style.display = 'none';
+        }
+
+        // Draw card logic for host
+        hostDrawCardBtn.addEventListener('click', () => {
+            hostDrawCardBtn.disabled = true;
+            // Pick a random card from the correct category
+            const cardType = gameState.nextCardType;
+            const cards = HOST_SAMPLE_CARDS[cardType] || ['Default card'];
+            const randomCard = cards[Math.floor(Math.random() * cards.length)];
+            const cardData = {
+                category: cardType,
+                description: randomCard,
+                text: randomCard
+            };
+            socket.emit('draw-card', cardData);
+            hideHostDrawCardButton();
+        });
     </script>
 </body>
 </html>
