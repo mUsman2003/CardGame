@@ -56,6 +56,7 @@ class GameRoom {
     };
     this.currentCard = null; // Track the current card
     this.playerDecisions = {}; // Track player decisions for the current card
+    this.waitingForVotes = false; // Track if we're waiting for player votes
   }
 
   addPlayer(socketId, playerData) {
@@ -161,64 +162,17 @@ class GameRoom {
   getEventForRing(position) {
     return this.events[position] || null;
   }
+
+  // Get only non-host players (actual game players)
+  getNonHostPlayers() {
+    return this.getPlayersArray().filter(p => p.id !== this.hostSocketId);
+  }
 }
 
 
 io.on('connection', (socket) => {
   console.log('New connection:', socket.id);
 
-  // Player makes a move (update this event handler)
-  socket.on('player-move', (data) => {
-    const roomId = gameRooms.get(socket.id);
-    const room = gameRooms.get(roomId);
-    
-    if (!room || !room.gameStarted) {
-      socket.emit('error', 'Game not active');
-      return;
-    }
-
-    const player = room.players.get(socket.id);
-    const currentPlayer = room.getCurrentPlayer();
-    
-    if (!player || player.id !== currentPlayer.id) {
-      socket.emit('error', 'Not your turn');
-      return;
-    }
-
-    // Determine movement based on direction
-    const steps = data.direction === 'forward' ? -1 : 1; // negative moves toward center (position 1)
-    const newPosition = room.movePlayer(socket.id, steps);
-    
-    // Move to next player
-    room.nextPlayer();
-    const nextPlayer = room.getCurrentPlayer();
-    
-    // Check for winner
-    const winner = room.checkWinner();
-    
-    // Broadcast the move result
-    io.to(roomId).emit('player-moved', {
-      player: player,
-      newPosition: newPosition,
-      players: room.getPlayersArray(),
-      nextPlayer: nextPlayer,
-      winner: winner,
-      card: data.card
-    });
-
-    if (winner) {
-      io.to(roomId).emit('game-ended', { winner: winner });
-      console.log(`Game ended in room ${roomId}. Winner: ${winner.name}`);
-    } else {
-      // Notify about turn change
-      io.to(roomId).emit('turn-changed', {
-        currentPlayer: nextPlayer.id,
-        players: room.getPlayersArray()
-      });
-    }
-
-    console.log(`Player ${player.name} moved ${data.direction} to position ${newPosition}. Next player: ${nextPlayer.name}`);
-  });
   // Host creates a room
   socket.on('create-room', () => {
     const room = new GameRoom(socket.id);
@@ -318,140 +272,153 @@ io.on('connection', (socket) => {
   socket.on('draw-card', (cardData) => {
     const roomId = gameRooms.get(socket.id);
     const room = gameRooms.get(roomId);
+    
     if (!room || !room.gameStarted) {
       socket.emit('error', 'Game not active');
       return;
     }
+    
     // Only the host can draw a card
     if (room.hostSocketId !== socket.id) {
       socket.emit('error', 'Only the host can draw a card');
       return;
     }
+
+    // Check if we're already waiting for votes
+    if (room.waitingForVotes) {
+      socket.emit('error', 'Still waiting for player votes on current card');
+      return;
+    }
+    
     // Check if card type matches expected type
     const expectedCardType = room.getNextCardType();
     if (cardData.category !== expectedCardType) {
       socket.emit('error', `Expected ${expectedCardType} card, but got ${cardData.category}`);
       return;
     }
+    
     // Set current card and reset player decisions
     room.currentCard = cardData;
     room.playerDecisions = {};
+    room.waitingForVotes = true;
+    
     // Broadcast card to all clients (including host)
     io.to(roomId).emit('card-drawn', {
       card: cardData,
       cardDrawnBy: { id: room.hostSocketId, name: 'Host' },
-      winner: room.checkWinner(),
-      nextPlayer: room.getCurrentPlayer(),
       nextCardType: room.getNextCardType(),
-      allPlayers: room.getPlayersArray(),
-      eventsTriggered: [],
       cardType: cardData.category
     });
+
+    console.log(`Card drawn in room ${roomId}: ${cardData.description || cardData.text}`);
   });
 
-  // Player submits their decision for the current card
-  socket.on('player-decision', (data) => {
+  // Player submits their vote (forward/backward)
+  socket.on('player-vote', (voteData) => {
     const roomId = gameRooms.get(socket.id);
     const room = gameRooms.get(roomId);
+    
     if (!room || !room.gameStarted) {
       socket.emit('error', 'Game not active');
       return;
     }
-    if (!room.currentCard) {
-      socket.emit('error', 'No card drawn');
+    
+    if (!room.currentCard || !room.waitingForVotes) {
+      socket.emit('error', 'No card drawn or not accepting votes');
       return;
     }
-    // Only allow players (not host) to make decisions
+    
+    // Only allow actual players (not host) to vote
     if (socket.id === room.hostSocketId) {
-      socket.emit('error', 'Host cannot make a decision');
+      socket.emit('error', 'Host cannot vote');
       return;
     }
-    // Record the player's decision (steps: +1, -1, etc.)
-    room.playerDecisions[socket.id] = data.steps;
-    // Notify all clients of the updated decisions
+
+    // Check if player already voted
+    if (room.playerDecisions[socket.id] !== undefined) {
+      socket.emit('error', 'You have already voted for this card');
+      return;
+    }
+    
+    // Convert vote direction to movement steps
+    // forward = move toward center (negative step), backward = move toward outer (positive step)
+    const steps = voteData.direction === 'forward' ? -1 : 1;
+    
+    // Record the player's decision
+    room.playerDecisions[socket.id] = {
+      direction: voteData.direction,
+      description: voteData.description,
+      steps: steps
+    };
+    
+    // Notify all clients of the updated decision
     io.to(roomId).emit('player-decision', {
       playerId: socket.id,
-      decision: data.steps
+      decision: room.playerDecisions[socket.id]
     });
-    // If all players (not host) have made a decision, process moves
-    const playerCount = room.getPlayersArray().length;
-    const nonHostPlayerCount = room.getPlayersArray().filter(p => p.id !== room.hostSocketId).length;
-    if (Object.keys(room.playerDecisions).length === nonHostPlayerCount) {
-      // Update all player positions
-      for (const [playerId, steps] of Object.entries(room.playerDecisions)) {
-        room.movePlayer(playerId, steps);
+    
+    // Check if all non-host players have voted
+    const nonHostPlayers = room.getNonHostPlayers();
+    const votesReceived = Object.keys(room.playerDecisions).length;
+    
+    console.log(`Vote received from ${socket.id}: ${voteData.direction}. Votes: ${votesReceived}/${nonHostPlayers.length}`);
+    
+    if (votesReceived === nonHostPlayers.length) {
+      // All players have voted - process moves
+      let eventsTriggered = [];
+      
+      // Apply moves to all players who voted
+      for (const [playerId, decision] of Object.entries(room.playerDecisions)) {
+        const oldPosition = room.players.get(playerId).position;
+        const newPosition = room.movePlayer(playerId, decision.steps);
+        console.log(`Player ${playerId} moved from ${oldPosition} to ${newPosition} (${decision.direction})`);
+        
+        // Check for events on advanced level
+        if (room.gameLevel === 'advanced' && room.isOnEventRing(newPosition)) {
+          const event = room.getEventForRing(newPosition);
+          if (event) {
+            eventsTriggered.push({
+              player: room.players.get(playerId),
+              event: event
+            });
+          }
+        }
       }
+      
       // Check for winner
       const winner = room.checkWinner();
-      // For advanced level, check for events
-      let playersOnEventRings = [];
-      if (room.gameLevel === 'advanced') {
-        room.getPlayersArray().forEach(player => {
-          if (room.isOnEventRing(player.position)) {
-            const event = room.getEventForRing(player.position);
-            if (event) {
-              playersOnEventRings.push({
-                player: player,
-                event: event
-              });
-            }
-          }
-        });
-      }
+      
       // Prepare for next round
       room.nextPlayer();
       room.cardDrawOrder++;
-      // Broadcast all moves and next turn
+      room.waitingForVotes = false;
+      
+      // Broadcast all moves completed
       io.to(roomId).emit('all-decisions-made', {
         allPlayers: room.getPlayersArray(),
-        nextPlayer: room.getCurrentPlayer(),
         nextCardType: room.getNextCardType(),
         winner: winner,
-        eventsTriggered: playersOnEventRings
+        eventsTriggered: eventsTriggered
       });
-      // If winner, end game
+      
+      // If there's a winner, end the game
       if (winner) {
         io.to(roomId).emit('game-ended', { winner: winner });
+        console.log(`Game ended in room ${roomId}. Winner: ${winner.name}`);
       }
-      // Reset for next card and allow host to draw next card
+      
+      // Reset for next card
       room.currentCard = null;
       room.playerDecisions = {};
-      // Notify host that next card can be drawn
+      room.waitingForVotes = false;
+      
+      // Notify host to draw the next card
       io.to(room.hostSocketId).emit('ready-for-next-card', {
-        nextCardType: room.getNextCardType(),
-        nextPlayer: room.getCurrentPlayer(),
-        allPlayers: room.getPlayersArray()
+        nextCardType: room.getNextCardType()
       });
+      
+      console.log(`All votes processed in room ${roomId}. Ready for next card.`);
     }
-  });
-
-  // Player moves their pawn
-  socket.on('move-pawn', (data) => {
-    const roomId = gameRooms.get(socket.id);
-    const room = gameRooms.get(roomId);
-    
-    if (!room || !room.gameStarted) {
-      socket.emit('error', 'Game not active');
-      return;
-    }
-
-    const player = room.players.get(socket.id);
-    if (!player) {
-      socket.emit('error', 'Player not found');
-      return;
-    }
-
-    // Move player
-    const newPosition = room.movePlayer(socket.id, data.steps);
-    
-    // Broadcast updated positions
-    io.to(roomId).emit('player-moved', {
-      player: player,
-      newPosition: newPosition,
-      allPlayers: room.getPlayersArray()
-    });
-
-    console.log(`Player ${player.name} moved to position ${newPosition}`);
   });
 
   // Handle disconnection
@@ -490,22 +457,6 @@ io.on('connection', (socket) => {
       });
     }
   });
-
-  // Host proceeds to next turn after all decisions made
-  socket.on('proceed-to-next-turn', () => {
-    const roomId = gameRooms.get(socket.id);
-    const room = gameRooms.get(roomId);
-    if (!room || room.hostSocketId !== socket.id) {
-      socket.emit('error', 'Not authorized to proceed to next turn');
-      return;
-    }
-    // Notify all clients to start the next turn (show card drawing phase, update turn, etc.)
-    io.to(roomId).emit('turn-ended', {
-      nextPlayer: room.getCurrentPlayer(),
-      nextCardType: room.getNextCardType(),
-      playerDecisions: {},
-    });
-  });
 });
 
 const PORT = process.env.PORT || 3000;
@@ -514,4 +465,3 @@ server.listen(PORT, () => {
   console.log(`Host interface: http://localhost:${PORT}/host`);
   console.log(`Player interface: http://localhost:${PORT}/player`);
 });
-

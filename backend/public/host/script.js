@@ -156,7 +156,6 @@ socket.on('player-decision', (data) => {
 socket.on('all-decisions-made', (data) => {
     gameState.phase = 'moving';
     gameState.players = data.allPlayers;
-    gameState.currentPlayer = data.nextPlayer;
     gameState.nextCardType = data.nextCardType;
 
     // Update player positions
@@ -170,12 +169,9 @@ socket.on('all-decisions-made', (data) => {
     // Check for winner
     if (data.winner) {
         showWinner(data.winner);
-    } else {
-        // Show proceed button
-        proceedBtn.style.display = 'block';
     }
 
-    updateCurrentPlayer(data.nextPlayer);
+    updatePhaseDisplay();
 });
 
 socket.on('turn-ended', (data) => {

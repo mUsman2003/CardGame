@@ -161,6 +161,10 @@ body {
     background: linear-gradient(45deg, #e74c3c, #c0392b);
 }
 
+.button.move-DontBtn {
+    background: linear-gradient(45deg, #adadad, #c5c5c5);
+}
+
 .movement-buttons {
     display: flex;
     gap: 0.5rem;
