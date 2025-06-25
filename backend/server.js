@@ -139,6 +139,7 @@ class GameRoom {
   movePlayer(playerId, steps) {
     const player = this.players.get(playerId);
     if (player) {
+      // Movement logic: negative steps = move toward center (forward), positive steps = move toward outer (backward)
       const newPosition = Math.max(1, Math.min(21, player.position + steps));
       player.position = newPosition;
       return newPosition;
@@ -297,6 +298,12 @@ io.on('connection', (socket) => {
       return;
     }
     
+    // Validate card format
+    if (!cardData.hasOwnProperty('forwardSteps') || !cardData.hasOwnProperty('backwardSteps')) {
+      socket.emit('error', 'Invalid card format: missing forwardSteps or backwardSteps');
+      return;
+    }
+    
     // Set current card and reset player decisions
     room.currentCard = cardData;
     room.playerDecisions = {};
@@ -310,7 +317,7 @@ io.on('connection', (socket) => {
       cardType: cardData.category
     });
 
-    console.log(`Card drawn in room ${roomId}: ${cardData.description || cardData.text}`);
+    console.log(`Card drawn in room ${roomId}: ${cardData.description}`);
   });
 
   // Player submits their vote (forward/backward)
@@ -340,15 +347,22 @@ io.on('connection', (socket) => {
       return;
     }
     
-    // Convert vote direction to movement steps
-    // forward = move toward center (negative step), backward = move toward outer (positive step)
-    const steps = voteData.direction === 'forward' ? -1 : 1;
+    // Calculate movement steps based on vote direction and card values
+    let steps;
+    if (voteData.direction === 'forward') {
+      // Forward movement: use forwardSteps from card (negative value to move toward center)
+      steps = -room.currentCard.forwardSteps;
+    } else {
+      // Backward movement: use backwardSteps from card (positive value to move toward outer)
+      steps = room.currentCard.backwardSteps;
+    }
     
     // Record the player's decision
     room.playerDecisions[socket.id] = {
       direction: voteData.direction,
       description: voteData.description,
-      steps: steps
+      steps: steps,
+      cardSteps: voteData.direction === 'forward' ? room.currentCard.forwardSteps : room.currentCard.backwardSteps
     };
     
     // Notify all clients of the updated decision
@@ -361,7 +375,7 @@ io.on('connection', (socket) => {
     const nonHostPlayers = room.getNonHostPlayers();
     const votesReceived = Object.keys(room.playerDecisions).length;
     
-    console.log(`Vote received from ${socket.id}: ${voteData.direction}. Votes: ${votesReceived}/${nonHostPlayers.length}`);
+    console.log(`Vote received from ${socket.id}: ${voteData.direction} (${voteData.direction === 'forward' ? room.currentCard.forwardSteps : room.currentCard.backwardSteps} steps). Votes: ${votesReceived}/${nonHostPlayers.length}`);
     
     if (votesReceived === nonHostPlayers.length) {
       // All players have voted - process moves
@@ -371,7 +385,7 @@ io.on('connection', (socket) => {
       for (const [playerId, decision] of Object.entries(room.playerDecisions)) {
         const oldPosition = room.players.get(playerId).position;
         const newPosition = room.movePlayer(playerId, decision.steps);
-        console.log(`Player ${playerId} moved from ${oldPosition} to ${newPosition} (${decision.direction})`);
+        console.log(`Player ${playerId} moved from ${oldPosition} to ${newPosition} (${decision.direction}: ${decision.cardSteps} steps)`);
         
         // Check for events on advanced level
         if (room.gameLevel === 'advanced' && room.isOnEventRing(newPosition)) {

@@ -42,46 +42,8 @@ const proceedBtn = document.getElementById('proceedBtn');
 const hostDrawCardSection = document.getElementById('hostDrawCardSection');
 const hostDrawCardBtn = document.getElementById('hostDrawCardBtn');
 
-// Card samples for host to draw from
-const HOST_SAMPLE_CARDS = {
-    'privilege-discrimination': [
-        'You can easily find beauty products that match your skin tone.',
-        'You have never been followed by security in a store.',
-        'Your achievements are never questioned as diversity hires.',
-        'You can walk alone at night without fear.',
-        'Your name is never mispronounced or seen as difficult.',
-        'You see people who look like you in leadership positions.',
-        'You have never been asked to speak for your entire race/group.',
-        'You can use public restrooms without fear or discomfort.',
-        'You can express affection for your partner in public without fear.',
-        'You have access to buildings and spaces without barriers.',
-        'Your cultural or religious holidays are recognized by your workplace/school.'
-    ],
-    'social-policies': [
-        'A new accessibility law is passed requiring ramps in all buildings.',
-        'Healthcare becomes free for all citizens.',
-        'Marriage equality is legalized nationwide.',
-        'Anti-discrimination laws in employment are strengthened.',
-        'Public transportation becomes wheelchair accessible.',
-        'Mental health support is included in all health plans.',
-        'Educational funding is distributed more equally across districts.',
-        'Affordable housing programs are expanded.',
-        'Minimum wage is increased significantly.',
-        'Parental leave policies are extended for all parents.'
-    ],
-    'behaviors': [
-        'You interrupt others in meetings without being called aggressive.',
-        'You can express anger without being labeled as difficult.',
-        'Your cultural holidays are recognized by your workplace/school.',
-        'You can make mistakes without them being attributed to your identity.',
-        'You receive mentorship and networking opportunities easily.',
-        'Your accent or way of speaking is considered professional.',
-        'You can discuss your weekend activities without hiding your identity.',
-        'You can show emotions without being seen as unprofessional.',
-        'Your ideas are taken seriously in group discussions.',
-        'You can dress according to your culture without negative judgment.'
-    ]
-};
+// Updated card samples with new format
+let HOST_SAMPLE_CARDS = {};
 
 // Create room
 createRoomBtn.addEventListener('click', () => {
@@ -132,12 +94,17 @@ socket.on('card-drawn', (data) => {
     gameState.phase = 'decisions';
     gameState.playerDecisions = {};
 
-    // Show card drawn on host
+    // Show card drawn on host with step information
     cardDrawnDisplay.style.display = 'block';
     cardDescription.innerHTML = `
                 <strong>${getCardTypeDisplay(gameState.nextCardType)}</strong><br>
                 <div style="font-size: 16px; margin-top: 10px; color: #333;">
-                    ${data.card.description || data.card.text || 'Card drawn'}
+                    ${data.card.description}
+                </div>
+                <div style="font-size: 12px; margin-top: 10px; color: #666; padding: 10px; background: #f8f9fa; border-radius: 5px;">
+                    <strong>Movimento:</strong> 
+                    Avançar = ${data.card.forwardSteps} casa(s) | 
+                    Recuar = ${data.card.backwardSteps} casa(s)
                 </div>
             `;
 
@@ -145,7 +112,6 @@ socket.on('card-drawn', (data) => {
     updateDecisionProgress();
     hideHostDrawCardButton();
 });
-
 socket.on('player-decision', (data) => {
     // Update progress bar and player decision display
     gameState.playerDecisions[data.playerId] = data.decision;
@@ -421,20 +387,57 @@ function getCardTypeDisplay(cardType) {
 }
 
 // Draw card logic for host
-hostDrawCardBtn.addEventListener('click', () => {
+hostDrawCardBtn.addEventListener('click', async () => {
     hostDrawCardBtn.disabled = true;
+
+    // Ensure cards are loaded
+    if (Object.keys(HOST_SAMPLE_CARDS).length === 0) {
+        await loadCards();
+    }
 
     // Pick a random card from the correct category
     const cardType = gameState.nextCardType;
-    const cards = HOST_SAMPLE_CARDS[cardType] || ['Default card'];
+    const cards = HOST_SAMPLE_CARDS[cardType] || [];
+    
+    if (cards.length === 0) {
+        console.error('No cards available for type:', cardType);
+        hostDrawCardBtn.disabled = false;
+        return;
+    }
+    
     const randomCard = cards[Math.floor(Math.random() * cards.length)];
 
+    // Send the card data in the correct format expected by the server
     const cardData = {
         category: cardType,
-        description: randomCard,
-        text: randomCard,
+        description: randomCard.description,
+        forwardSteps: randomCard.forwardSteps,
+        backwardSteps: randomCard.backwardSteps,
         cardType: getCardTypeDisplay(cardType)
     };
 
+    console.log('Sending card data:', cardData);
     socket.emit('draw-card', cardData);
 });
+
+async function loadCards() {
+    try {
+        const cardTypes = ['privilege-discrimination', 'social-policies', 'behaviors'];
+        
+        for (const cardType of cardTypes) {
+            const response = await fetch(`./cards/${cardType}.json`);
+            if (response.ok) {
+                HOST_SAMPLE_CARDS[cardType] = await response.json();
+            } else {
+                console.error(`Failed to load ${cardType} cards`);
+                HOST_SAMPLE_CARDS[cardType] = [];
+            }
+        }
+        
+        console.log('Cards loaded successfully:', HOST_SAMPLE_CARDS);
+    } catch (error) {
+        console.error('Error loading cards:', error);
+    }
+}
+
+loadCards();

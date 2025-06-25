@@ -41,7 +41,6 @@ const waitingForCard = document.getElementById('waitingForCard');
 const votingSection = document.getElementById('votingSection');
 const voteConfirmed = document.getElementById('voteConfirmed');
 const moveForwardBtn = document.getElementById('moveForwardBtn');
-const moveDontBtn = document.getElementById('moveDontBtn');
 const moveBackwardBtn = document.getElementById('moveBackwardBtn');
 const voteChoice = document.getElementById('voteChoice');
 
@@ -108,10 +107,6 @@ moveForwardBtn.addEventListener('click', () => {
     makeVote('forward');
 });
 
-moveDontBtn.addEventListener('click', () => {
-    makeVote('moveDontBtn');
-});
-
 moveBackwardBtn.addEventListener('click', () => {
     makeVote('backward');
 });
@@ -139,7 +134,6 @@ function makeVote(direction) {
     // Disable buttons
     moveForwardBtn.disabled = true;
     moveBackwardBtn.disabled = true;
-    moveDontBtn.disabled = true;
 
 }
 
@@ -216,7 +210,6 @@ socket.on('card-drawn', (data) => {
     // Reset buttons
     moveForwardBtn.disabled = false;
     moveBackwardBtn.disabled = false;
-    moveDontBtn.disabled=false;
 
     // Do NOT show card description to player
     // Only show voting options
