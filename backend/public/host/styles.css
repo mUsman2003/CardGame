@@ -188,8 +188,32 @@
             position: absolute;
             transition: all 0.5s ease;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            
+            /* Center the text/icon within the circular pawn */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            
+            /* Ensure the pawn is positioned from its center point */
+            transform: translate(-50%, -50%);
+            
+            /* Text styling for the icon */
+            font-size: 12px;
+            font-weight: bold;
+            text-align: center;
+            /* line-height: 1; */
+            
+            /* Background color for better visibility */
+            background: #fff;
+            color: #333;
         }
 
+        /* Alternative larger pawn size for better visibility */
+        .pawn.large {
+            width: 24px;
+            height: 24px;
+            font-size: 14px;
+        }
         .game-controls {
             text-align: center;
             margin: 2rem 0;
