@@ -1,4 +1,5 @@
-const socket = io();
+const localIp = window.location.hostname; // Automatically gets the IP when on the same network
+const socket = io(`http://${localIp}:3000`);
 let gameState = {
   roomCode: null,
   players: [],
