@@ -2,6 +2,7 @@ const express = require("express");
 const http = require("http");
 const socketIo = require("socket.io");
 const path = require("path");
+const QRCode = require("qrcode"); // You'll need to install this: npm install qrcode
 
 const app = express();
 const server = http.createServer(app);
@@ -36,34 +37,247 @@ function getLocalIp() {
   return "localhost";
 }
 
-app.get("/connection-info", (req, res) => {
+// Enhanced connection info page with QR code
+app.get("/connection-info", async (req, res) => {
   const localIp = getLocalIp();
-  res.send(`
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <title>Connection Info</title>
-      <style>
-        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
-        .info-box { background: #f0f8ff; padding: 20px; border-radius: 10px; max-width: 500px; margin: 0 auto; }
-        .ip-address { font-size: 24px; font-weight: bold; margin: 15px 0; color: #0066cc; }
-      </style>
-    </head>
-    <body>
-      <h1>Classroom Game Setup</h1>
-      <div class="info-box">
-        <h2>Teacher's Connection Info</h2>
-        <p>Host URL:</p>
-        <div class="ip-address">http://${localIp}:3000/host</div>
-        
-        <h2>Student Access</h2>
-        <p>Students should visit:</p>
-        <div class="ip-address">http://${localIp}:3000/player</div>
-        
-      </div>
-    </body>
-    </html>
-  `);
+  const playerUrl = `http://${localIp}:3000/player`;
+
+  try {
+    // Generate QR code as data URL
+    const qrCodeDataUrl = await QRCode.toDataURL(playerUrl, {
+      width: 300,
+      margin: 2,
+      color: {
+        dark: "#000000",
+        light: "#FFFFFF",
+      },
+    });
+
+    res.send(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Connection Info</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+          body { 
+            font-family: Arial, sans-serif; 
+            text-align: center; 
+            padding: 20px; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+            margin: 0;
+          }
+          .container {
+            max-width: 800px;
+            margin: 0 auto;
+          }
+          .info-box { 
+            background: rgba(255, 255, 255, 0.1); 
+            padding: 30px; 
+            border-radius: 15px; 
+            margin: 20px 0;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+          }
+          .ip-address { 
+            font-size: 20px; 
+            font-weight: bold; 
+            margin: 15px 0; 
+            color: #FFD700; 
+            background: rgba(0, 0, 0, 0.2);
+            padding: 10px;
+            border-radius: 8px;
+            word-break: break-all;
+          }
+          .qr-section {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            color: #333;
+          }
+          .qr-code {
+            margin: 20px 0;
+          }
+          .qr-instructions {
+            font-size: 18px;
+            margin: 15px 0;
+            color: #2c3e50;
+          }
+          .connection-methods {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+          }
+          .method-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+          }
+          .method-title {
+            font-size: 24px;
+            margin-bottom: 15px;
+            color: #FFD700;
+          }
+          .step {
+            margin: 10px 0;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+          }
+          @media (max-width: 768px) {
+            .connection-methods {
+              grid-template-columns: 1fr;
+            }
+            .ip-address {
+              font-size: 16px;
+            }
+            body {
+              padding: 10px;
+            }
+          }
+          .refresh-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+          }
+          .refresh-btn:hover {
+            background: #45a049;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <h1>🎮 Classroom Game Setup</h1>
+          
+          <div class="qr-section">
+            <h2>📱 Quick Connect for Students</h2>
+            <div class="qr-instructions">
+              <strong>Scan this QR code with your phone camera:</strong>
+            </div>
+            <div class="qr-code">
+              <img src="${qrCodeDataUrl}" alt="QR Code for Player Access" />
+            </div>
+            <p style="color: #666; font-size: 14px;">
+              The QR code will take you directly to the player interface
+            </p>
+          </div>
+
+          <div class="connection-methods">
+            <div class="method-card">
+              <div class="method-title">👨‍🏫 For Teachers</div>
+              <div class="step">
+                <strong>Host Interface:</strong>
+              </div>
+              <div class="ip-address">http://${localIp}:3000/host</div>
+              <div class="step">
+                Use this to create rooms and manage the game
+              </div>
+            </div>
+
+            <div class="method-card">
+              <div class="method-title">👨‍🎓 For Students (Manual)</div>
+              <div class="step">
+                <strong>Player Interface:</strong>
+              </div>
+              <div class="ip-address">http://${localIp}:3000/player</div>
+              <div class="step">
+                Type this URL in your browser if QR code doesn't work
+              </div>
+            </div>
+          </div>
+
+          <div class="info-box">
+            <h3>📋 Setup Instructions</h3>
+            <div class="step">1. Teacher opens the Host Interface</div>
+            <div class="step">2. Create a game room</div>
+            <div class="step">3. Students scan QR code or visit Player Interface</div>
+            <div class="step">4. Students enter room code and join</div>
+            <div class="step">5. Start the game!</div>
+          </div>
+
+          <button class="refresh-btn" onclick="window.location.reload()">
+            🔄 Refresh Connection Info
+          </button>
+
+          <div style="margin-top: 30px; font-size: 14px; opacity: 0.8;">
+            <p>💡 Make sure all devices are connected to the same WiFi network</p>
+            <p>🌐 Server IP: ${localIp} | Port: 3000</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `);
+  } catch (error) {
+    console.error("Error generating QR code:", error);
+    // Fallback without QR code
+    res.send(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Connection Info</title>
+        <style>
+          body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+          .info-box { background: #f0f8ff; padding: 20px; border-radius: 10px; max-width: 500px; margin: 0 auto; }
+          .ip-address { font-size: 24px; font-weight: bold; margin: 15px 0; color: #0066cc; }
+          .error { color: #cc0000; margin: 10px 0; }
+        </style>
+      </head>
+      <body>
+        <h1>Classroom Game Setup</h1>
+        <div class="info-box">
+          <div class="error">QR Code generation failed. Using manual connection only.</div>
+          
+          <h2>Teacher's Connection Info</h2>
+          <p>Host URL:</p>
+          <div class="ip-address">http://${localIp}:3000/host</div>
+          
+          <h2>Student Access</h2>
+          <p>Students should visit:</p>
+          <div class="ip-address">http://${localIp}:3000/player</div>
+        </div>
+      </body>
+      </html>
+    `);
+  }
+});
+
+// API endpoint to get QR code data (for dynamic updates)
+app.get("/api/qr-code", async (req, res) => {
+  const localIp = getLocalIp();
+  const playerUrl = `http://${localIp}:3000/player`;
+
+  try {
+    const qrCodeDataUrl = await QRCode.toDataURL(playerUrl, {
+      width: 300,
+      margin: 2,
+      color: {
+        dark: "#000000",
+        light: "#FFFFFF",
+      },
+    });
+
+    res.json({
+      success: true,
+      qrCode: qrCodeDataUrl,
+      playerUrl: playerUrl,
+      hostUrl: `http://${localIp}:3000/host`,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: "Failed to generate QR code",
+    });
+  }
 });
 
 // Identity categories available - updated to match client expectations
@@ -547,12 +761,18 @@ server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log("\n=== Connection Information ===");
   console.log(
-    `Connection info page: http://${localIp}:${PORT}/connection-info`
+    `📋 Connection info page: http://${localIp}:${PORT}/connection-info`
   );
-  console.log(`Host interface: http://${localIp}:${PORT}/host`);
-  console.log(`Player interface: http://${localIp}:${PORT}/player`);
+  console.log(`👨‍🏫 Host interface: http://${localIp}:${PORT}/host`);
+  console.log(`👨‍🎓 Player interface: http://${localIp}:${PORT}/player`);
+  console.log(`📱 QR Code API: http://${localIp}:${PORT}/api/qr-code`);
   console.log("\n=== Local Access ===");
-  console.log(`Connection info page: http://localhost:${PORT}/connection-info`);
-  console.log(`Host interface: http://localhost:${PORT}/host`);
-  console.log(`Player interface: http://localhost:${PORT}/player`);
+  console.log(
+    `📋 Connection info page: http://localhost:${PORT}/connection-info`
+  );
+  console.log(`👨‍🏫 Host interface: http://localhost:${PORT}/host`);
+  console.log(`👨‍🎓 Player interface: http://localhost:${PORT}/player`);
+  console.log(
+    "\n💡 Students can scan the QR code from the connection info page!"
+  );
 });
