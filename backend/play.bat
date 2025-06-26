@@ -1,0 +1,6 @@
+@echo off
+echo Starting Game Server...
+start game-server-win.exe
+timeout /t 3 >nul
+echo Starting Ngrok...
+start .\ngrok.exe http 3000

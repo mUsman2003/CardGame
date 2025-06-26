@@ -12,6 +12,20 @@ const io = socketIo(server, {
   }
 });
 
+const os = require('os');
+
+function getLocalIp() {
+  const interfaces = os.networkInterfaces();
+  for (const name of Object.keys(interfaces)) {
+    for (const iface of interfaces[name]) {
+      if (iface.family === 'IPv4' && !iface.internal) {
+        return iface.address;
+      }
+    }
+  }
+  return '127.0.0.1';
+}
+
 // Serve static files
 app.use(express.static('public'));
 
@@ -44,7 +58,7 @@ class GameRoom {
     this.players = new Map();
     this.gameStarted = false;
     this.currentPlayerIndex = 0;
-    this.usedIdentities = new Set();
+    this.usedNames = new Set(); // Changed from usedIdentities to usedNames
     this.gameLevel = 'basic'; // basic, intermediate, advanced
     this.cardDrawOrder = 0; // Track which type of card to draw next
     this.eventRings = new Set([5, 10, 15, 20]); // Rings with events
@@ -60,8 +74,9 @@ class GameRoom {
   }
 
   addPlayer(socketId, playerData) {
-    if (this.usedIdentities.has(playerData.identity)) {
-      return { success: false, error: 'Identity already taken' };
+    // Check for duplicate names instead of identities
+    if (this.usedNames.has(playerData.name.toLowerCase())) {
+      return { success: false, error: 'Name already taken' };
     }
     
     const identityData = IDENTITY_CATEGORIES.find(cat => cat.id === playerData.identity);
@@ -81,26 +96,28 @@ class GameRoom {
       isConnected: true
     });
     
-    this.usedIdentities.add(playerData.identity);
+    // Store the name instead of identity
+    this.usedNames.add(playerData.name.toLowerCase());
     return { success: true };
   }
 
   removePlayer(socketId) {
     const player = this.players.get(socketId);
     if (player) {
-      this.usedIdentities.delete(player.identity);
+      // Remove the name instead of identity
+      this.usedNames.delete(player.name.toLowerCase());
       this.players.delete(socketId);
     }
   }
 
   getAvailableIdentities() {
-    return IDENTITY_CATEGORIES.filter(identity => !this.usedIdentities.has(identity.id));
+    // Return all identities since they can be reused
+    return IDENTITY_CATEGORIES;
   }
 
   getAvailablePawnIds() {
-    return IDENTITY_CATEGORIES
-      .filter(identity => !this.usedIdentities.has(identity.id))
-      .map(identity => identity.id);
+    // Return all pawn IDs since they can be reused
+    return IDENTITY_CATEGORIES.map(identity => identity.id);
   }
 
   getPlayersArray() {
@@ -320,7 +337,7 @@ io.on('connection', (socket) => {
     console.log(`Card drawn in room ${roomId}: ${cardData.description}`);
   });
 
-  // Player submits their vote (forward/backward)
+ // Player submits their vote (forward/backward)
   socket.on('player-vote', (voteData) => {
     const roomId = gameRooms.get(socket.id);
     const room = gameRooms.get(roomId);
@@ -407,12 +424,20 @@ io.on('connection', (socket) => {
       room.cardDrawOrder++;
       room.waitingForVotes = false;
       
-      // Broadcast all moves completed
+      // Broadcast all moves completed - THIS IS THE KEY FIX
       io.to(roomId).emit('all-decisions-made', {
         allPlayers: room.getPlayersArray(),
         nextCardType: room.getNextCardType(),
         winner: winner,
         eventsTriggered: eventsTriggered
+      });
+      
+      // ALSO send individual player updates to ensure sync - NEW
+      room.getPlayersArray().forEach(player => {
+        io.to(player.id).emit('player-position-updated', {
+          playerData: player,
+          allPlayers: room.getPlayersArray()
+        });
       });
       
       // If there's a winner, end the game
@@ -475,7 +500,9 @@ io.on('connection', (socket) => {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Host interface: http://localhost:${PORT}/host`);
-  console.log(`Player interface: http://localhost:${PORT}/player`);
+  const localIp = getLocalIp();
+  console.log(`✅ Server running!`);
+  console.log(`👉 Host interface: http://localhost:${PORT}/host`);
+  console.log(`👉 Player interface: http://localhost:${PORT}/player`);
+  console.log(`🌐 Access from mobile: http://${localIp}:${PORT}/player`);
 });

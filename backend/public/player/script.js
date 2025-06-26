@@ -240,6 +240,43 @@ socket.on('host-disconnected', () => {
     setTimeout(() => location.reload(), 3000);
 });
 
+// Add this new socket event handler to the existing player script.js
+socket.on('player-position-updated', (data) => {
+    // Update the current player's data
+    if (data.playerData && data.playerData.id === gameState.playerData?.id) {
+        gameState.playerData.position = data.playerData.position;
+        updateGamePlayerDisplay();
+    }
+    
+    // Update all players data
+    if (data.allPlayers) {
+        gameState.players = data.allPlayers;
+        updateOtherPlayersDisplay();
+    }
+});
+
+// Modify the existing all-votes-received event handler
+socket.on('all-decisions-made', (data) => {
+    gameState.players = data.allPlayers;
+    gameState.cardDrawn = false;
+    gameState.hasVoted = false;
+    gameState.myVote = null;
+
+    // Update current player data from the updated players array
+    const updatedPlayerData = gameState.players.find(p => p.id === gameState.playerData?.id);
+    if (updatedPlayerData) {
+        gameState.playerData = updatedPlayerData;
+    }
+
+    updateGamePlayerDisplay();
+    updateOtherPlayersDisplay();
+    updateGameDisplay();
+
+    if (data.winner) {
+        showWinner(data.winner);
+    }
+});
+
 // Functions
 function showStatus(message, type) {
     statusMessage.textContent = message;
@@ -262,10 +299,11 @@ function updatePlayerDisplay() {
     }
 }
 
+// Also modify the updateGamePlayerDisplay function to ensure proper updates
 function updateGamePlayerDisplay() {
-    const currentPlayerData = gameState.players.find(p => p.id === gameState.playerData?.id);
+    const currentPlayerData = gameState.players.find(p => p.id === gameState.playerData?.id) || gameState.playerData;
     if (currentPlayerData) {
-        const pawn = IDENTITY_PAWNS.find(p => p.id === currentPlayerData.pawnId);
+        const pawn = IDENTITY_PAWNS.find(p => p.id === currentPlayerData.pawnId || p.id === currentPlayerData.identity);
         if (pawn) {
             document.getElementById('gamePlayerPawn').innerHTML = pawn.icon;
             document.getElementById('gamePlayerName').textContent = currentPlayerData.name;
@@ -283,7 +321,7 @@ function updateOtherPlayersDisplay() {
     if (otherPlayersList) {
         otherPlayersList.innerHTML = '';
         otherPlayers.forEach(player => {
-            const pawn = IDENTITY_PAWNS.find(p => p.id === player.pawnId);
+            const pawn = IDENTITY_PAWNS.find(p => p.id === player.pawnId || p.id === player.identity);
             const playerElement = document.createElement('div');
             playerElement.className = 'other-player';
             playerElement.innerHTML = `
@@ -302,7 +340,7 @@ function updateOtherPlayersDisplay() {
     if (gameOtherPlayersList) {
         gameOtherPlayersList.innerHTML = '';
         otherPlayers.forEach(player => {
-            const pawn = IDENTITY_PAWNS.find(p => p.id === player.pawnId);
+            const pawn = IDENTITY_PAWNS.find(p => p.id === player.pawnId || p.id === player.identity);
             const playerElement = document.createElement('div');
             playerElement.className = 'other-player';
             playerElement.innerHTML = `
