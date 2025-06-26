@@ -219,6 +219,17 @@ function createSpiralBoard() {
     const boardSize = 600;
     const center = boardSize / 2;
     const eventRings = [5, 10, 15, 20];
+    
+    // Define ring colors from outer (21) to inner (1) based on your image
+    const ringColors = [
+    '#1f4e79', '#ffffff', '#4472a8', '#ffffff',
+    '#7ba3d1', '#ffffff', '#b8d1ed', '#ffffff',
+    '#8e44ad', '#ffffff', '#af7ac5', '#ffffff',
+    '#e8b4cb', '#ffffff', '#f06292', '#ffffff',
+    '#ff9800', '#ffffff', '#ffcc80', '#ffffff',
+    '#4caf50' // Center ring
+];
+
 
     // Create rings from outer (21) to inner (1)
     for (let ring = 21; ring >= 1; ring--) {
@@ -233,12 +244,13 @@ function createSpiralBoard() {
         ringElement.style.height = `${size}px`;
         ringElement.style.left = `${center - radius}px`;
         ringElement.style.top = `${center - radius}px`;
+        
+        // Apply color from the array
+        const colorIndex = 21 - ring; // Convert ring number to array index
+        ringElement.style.backgroundColor = ringColors[colorIndex];
+        ringElement.style.borderColor = ringColors[colorIndex];
 
-        // Add ring number
-        const ringNumber = document.createElement('div');
-        ringNumber.className = 'ring-number';
-        ringNumber.textContent = ring;
-        ringElement.appendChild(ringNumber);
+        // Remove the ring number code here
 
         board.appendChild(ringElement);
     }
@@ -251,8 +263,19 @@ function updatePlayerPositions() {
     gameState.players.forEach((player, index) => {
         const pawn = document.createElement('div');
         pawn.className = 'pawn';
-        pawn.style.backgroundColor = player.color;
         pawn.title = `${player.name} (${player.identityName})`;
+        
+        // Use icon instead of background color
+        pawn.textContent = player.icon;
+        pawn.style.fontSize = '24px';
+        pawn.style.width = '30px';
+        pawn.style.height = '30px';
+        pawn.style.display = 'flex';
+        pawn.style.alignItems = 'center';
+        pawn.style.justifyContent = 'center';
+        pawn.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+        pawn.style.borderRadius = '50%';
+        pawn.style.border = `2px solid ${player.color}`;
 
         const ring = document.getElementById(`ring-${player.position}`);
         if (ring) {
@@ -264,8 +287,8 @@ function updatePlayerPositions() {
             const x = Math.cos(angle) * pawnRadius;
             const y = Math.sin(angle) * pawnRadius;
 
-            pawn.style.left = `${parseFloat(ring.style.left) + parseFloat(ring.style.width) / 2 + x - 10}px`;
-            pawn.style.top = `${parseFloat(ring.style.top) + parseFloat(ring.style.height) / 2 + y - 10}px`;
+            pawn.style.left = `${parseFloat(ring.style.left) + parseFloat(ring.style.width) / 2 + x - 15}px`;
+            pawn.style.top = `${parseFloat(ring.style.top) + parseFloat(ring.style.height) / 2 + y - 15}px`;
 
             document.getElementById('spiralBoard').appendChild(pawn);
         }
