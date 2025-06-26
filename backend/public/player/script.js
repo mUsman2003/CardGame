@@ -162,6 +162,11 @@ function updateGameDisplay() {
     }
 }
 
+socket.on('event-choice-required', (data) => {
+    // Show event choice UI
+    showEventChoices(data.event, data.choices);
+});
+
 // Socket events
 socket.on('joined-room', (data) => {
     gameState.playerData = data.playerData;
@@ -397,6 +402,43 @@ function showWinner(winner) {
 
     gameActive.style.display = 'none';
     winnerAnnouncement.style.display = 'block';
+}
+function showEventChoices(event, choices) {
+    // Hide other UI elements
+    votingSection.style.display = 'none';
+    voteConfirmed.style.display = 'none';
+    waitingForCard.style.display = 'none';
+    
+    // Show event choice UI
+    const eventChoiceSection = document.getElementById('eventChoiceSection'); // You'll need to add this to HTML
+    eventChoiceSection.style.display = 'block';
+    
+    document.getElementById('eventDescription').textContent = `${event.name}: ${event.description}`;
+    
+    const choicesContainer = document.getElementById('eventChoices');
+    choicesContainer.innerHTML = '';
+    
+    choices.forEach(choice => {
+        const button = document.createElement('button');
+        button.className = 'event-choice-btn';
+        button.textContent = choice.text;
+        button.onclick = () => makeEventChoice(event.type, choice.id, choice.targetId);
+        choicesContainer.appendChild(button);
+    });
+}
+
+function makeEventChoice(eventType, decision, targetId = null) {
+    socket.emit('event-decision', {
+        eventType: eventType,
+        decision: decision,
+        targetPlayerId: targetId
+    });
+    
+    // Hide event choice UI
+    document.getElementById('eventChoiceSection').style.display = 'none';
+    
+    // Show waiting message
+    turnIndicator.textContent = 'Event choice made - processing...';
 }
 
 // Initialize

@@ -527,3 +527,253 @@ body {
     font-weight: bold;
     box-shadow: 0 2px 12px rgba(243,156,18,0.10);
 }
+
+/* Event Choice Section Styles */
+.event-choice-section {
+    background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+    border: 3px solid #ff9800;
+    border-radius: 16px;
+    padding: 2rem 1.5rem;
+    margin: 1.5rem 0;
+    text-align: center;
+    box-shadow: 0 8px 32px rgba(255, 152, 0, 0.15);
+    animation: event-appear 0.8s ease-out;
+    position: relative;
+    overflow: hidden;
+}
+
+.event-choice-section::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    animation: shimmer 3s infinite;
+    pointer-events: none;
+}
+
+.event-choice-section h3 {
+    color: #e65100;
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+    font-weight: bold;
+    text-shadow: 0 2px 4px rgba(230, 81, 0, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.event-choice-section h3::before {
+    content: '⚡';
+    font-size: 2rem;
+    animation: pulse-glow 2s infinite;
+}
+
+.event-choice-section h3::after {
+    content: '⚡';
+    font-size: 2rem;
+    animation: pulse-glow 2s infinite 0.5s;
+}
+
+#eventDescription {
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 12px;
+    padding: 1.2rem;
+    margin: 1.5rem 0;
+    color: #bf360c;
+    font-size: 1.1rem;
+    line-height: 1.5;
+    font-weight: 500;
+    border: 2px solid rgba(255, 152, 0, 0.3);
+    box-shadow: inset 0 2px 8px rgba(255, 152, 0, 0.1);
+}
+
+.event-choices {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.event-choice-btn {
+    background: linear-gradient(45deg, #ff7043, #ff5722);
+    color: white;
+    border: none;
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(255, 87, 34, 0.3);
+    position: relative;
+    overflow: hidden;
+    text-align: center;
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.event-choice-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.6s ease;
+}
+
+.event-choice-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(255, 87, 34, 0.4);
+    background: linear-gradient(45deg, #ff6f00, #ff3d00);
+}
+
+.event-choice-btn:hover::before {
+    left: 100%;
+}
+
+.event-choice-btn:active {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 87, 34, 0.3);
+}
+
+.event-choice-btn:disabled {
+    background: #bdbdbd;
+    color: #757575;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+    animation: none;
+}
+
+/* Alternative button styles for different choice types */
+.event-choice-btn.positive {
+    background: linear-gradient(45deg, #4caf50, #388e3c);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+.event-choice-btn.positive:hover {
+    background: linear-gradient(45deg, #43a047, #2e7d32);
+    box-shadow: 0 8px 20px rgba(76, 175, 80, 0.4);
+}
+
+.event-choice-btn.negative {
+    background: linear-gradient(45deg, #f44336, #d32f2f);
+    box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3);
+}
+
+.event-choice-btn.negative:hover {
+    background: linear-gradient(45deg, #e53935, #c62828);
+    box-shadow: 0 8px 20px rgba(244, 67, 54, 0.4);
+}
+
+.event-choice-btn.neutral {
+    background: linear-gradient(45deg, #607d8b, #455a64);
+    box-shadow: 0 4px 12px rgba(96, 125, 139, 0.3);
+}
+
+.event-choice-btn.neutral:hover {
+    background: linear-gradient(45deg, #546e7a, #37474f);
+    box-shadow: 0 8px 20px rgba(96, 125, 139, 0.4);
+}
+
+/* Animations */
+@keyframes event-appear {
+    0% {
+        opacity: 0;
+        transform: scale(0.9) translateY(20px);
+    }
+    50% {
+        opacity: 0.8;
+        transform: scale(1.02) translateY(-5px);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+@keyframes pulse-glow {
+    0%, 100% {
+        transform: scale(1);
+        filter: brightness(1);
+    }
+    50% {
+        transform: scale(1.2);
+        filter: brightness(1.3);
+    }
+}
+
+@keyframes shimmer {
+    0% {
+        transform: translateX(-100%) translateY(-100%) rotate(45deg);
+    }
+    100% {
+        transform: translateX(100%) translateY(100%) rotate(45deg);
+    }
+}
+
+/* Responsive design for mobile */
+@media (max-width: 480px) {
+    .event-choice-section {
+        padding: 1.5rem 1rem;
+        margin: 1rem 0;
+    }
+    
+    .event-choice-section h3 {
+        font-size: 1.5rem;
+        flex-direction: column;
+        gap: 0.2rem;
+    }
+    
+    .event-choice-section h3::before,
+    .event-choice-section h3::after {
+        font-size: 1.5rem;
+    }
+    
+    #eventDescription {
+        padding: 1rem;
+        font-size: 1rem;
+    }
+    
+    .event-choices {
+        gap: 0.8rem;
+    }
+    
+    .event-choice-btn {
+        padding: 0.8rem 1rem;
+        font-size: 1rem;
+        min-height: 50px;
+    }
+}
+
+/* Additional utility classes for dynamic styling */
+.event-urgent {
+    animation: urgent-pulse 1s infinite;
+}
+
+.event-positive {
+    border-color: #4caf50;
+    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+}
+
+.event-negative {
+    border-color: #f44336;
+    background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+}
+
+@keyframes urgent-pulse {
+    0%, 100% {
+        box-shadow: 0 8px 32px rgba(255, 152, 0, 0.15);
+    }
+    50% {
+        box-shadow: 0 8px 32px rgba(255, 152, 0, 0.3);
+    }
+}

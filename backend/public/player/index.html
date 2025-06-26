@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,7 @@
     <link rel="stylesheet" href="styles.css">
     <script src="/socket.io/socket.io.js"></script>
 </head>
+
 <body>
     <div class="container">
         <div class="header">
@@ -24,7 +26,8 @@
 
                 <div class="form-group">
                     <label for="roomCode">Room Code</label>
-                    <input type="text" id="roomCode" placeholder="Enter room code" maxlength="6" style="text-transform: uppercase;">
+                    <input type="text" id="roomCode" placeholder="Enter room code" maxlength="6"
+                        style="text-transform: uppercase;">
                 </div>
 
                 <div class="form-group">
@@ -69,7 +72,8 @@
                 <div class="game-info">
                     <div id="difficultyBadge" class="difficulty-badge difficulty-basic">Basic Level</div>
                     <h4>Game Instructions</h4>
-                    <p>When a card is drawn by the host, decide whether to move forward or backward based on your experience with the situation described.</p>
+                    <p>When a card is drawn by the host, decide whether to move forward or backward based on your
+                        experience with the situation described.</p>
                 </div>
 
                 <div class="game-status">
@@ -93,7 +97,8 @@
 
                 <!-- Waiting for Card -->
                 <div id="waitingForCard" style="display: block;">
-                    <div style="text-align: center; padding: 20px; background: #f8f9fa; border-radius: 8px; margin: 20px 0;">
+                    <div
+                        style="text-align: center; padding: 20px; background: #f8f9fa; border-radius: 8px; margin: 20px 0;">
                         <div style="font-size: 24px; margin-bottom: 10px;">⏳</div>
                         <div style="font-size: 18px; color: #666;">Waiting for host to draw a card...</div>
                     </div>
@@ -101,18 +106,22 @@
 
                 <!-- Voting Section - ONLY Forward/Backward Options -->
                 <div id="votingSection" style="display: none;">
-                    <div style="text-align: center; padding: 20px; background: #e3f2fd; border-radius: 8px; margin: 20px 0;">
-                        <div style="font-size: 18px; margin-bottom: 15px; font-weight: bold;">A card has been drawn!</div>
+                    <div
+                        style="text-align: center; padding: 20px; background: #e3f2fd; border-radius: 8px; margin: 20px 0;">
+                        <div style="font-size: 18px; margin-bottom: 15px; font-weight: bold;">A card has been drawn!
+                        </div>
                         <div style="font-size: 14px; color: #666; margin-bottom: 20px;">
                             The host has drawn a card. Based on your identity and experiences, choose your response:
                         </div>
-                        
+
                         <div class="movement-buttons" style="display: flex; gap: 15px; justify-content: center;">
-                            <button id="moveForwardBtn" class="button move-forward" style="flex: 1; max-width: 200px; padding: 15px;">
+                            <button id="moveForwardBtn" class="button move-forward"
+                                style="flex: 1; max-width: 200px; padding: 15px;">
                                 ⬆️ Move Forward
                             </button>
-                            
-                            <button id="moveBackwardBtn" class="button move-backward" style="flex: 1; max-width: 200px; padding: 15px;">
+
+                            <button id="moveBackwardBtn" class="button move-backward"
+                                style="flex: 1; max-width: 200px; padding: 15px;">
                                 ⬇️ Move Backward
                             </button>
                         </div>
@@ -121,14 +130,22 @@
 
                 <!-- Vote Confirmed -->
                 <div id="voteConfirmed" style="display: none;">
-                    <div style="text-align: center; padding: 20px; background: #e8f5e8; border-radius: 8px; margin: 20px 0;">
+                    <div
+                        style="text-align: center; padding: 20px; background: #e8f5e8; border-radius: 8px; margin: 20px 0;">
                         <div style="font-size: 24px; margin-bottom: 10px;">✅</div>
                         <div style="font-size: 18px; color: #2e7d32; font-weight: bold;">Vote Submitted!</div>
                         <div style="font-size: 14px; color: #666; margin-top: 10px;">
                             Waiting for other players to vote...
                         </div>
-                        <div id="voteChoice" style="font-size: 16px; margin-top: 10px; padding: 10px; background: #f1f8e9; border-radius: 4px;"></div>
+                        <div id="voteChoice"
+                            style="font-size: 16px; margin-top: 10px; padding: 10px; background: #f1f8e9; border-radius: 4px;">
+                        </div>
                     </div>
+                </div>
+                <div id="eventChoiceSection" class="event-choice-section" style="display: none;">
+                    <h3>Event Triggered!</h3>
+                    <p id="eventDescription"></p>
+                    <div id="eventChoices" class="event-choices"></div>
                 </div>
 
                 <div class="other-players">
@@ -141,16 +158,18 @@
             <div id="winnerAnnouncement" class="winner-announcement" style="display: none;">
                 <h2>🏆 Game Complete!</h2>
                 <p id="winnerText"></p>
-                
+
                 <div class="reflection-prompt">
                     <h4>Time for Reflection</h4>
-                    <p>Discuss with your teacher and classmates about the different positions of the pawns and what this reveals about social inequalities in our society.</p>
+                    <p>Discuss with your teacher and classmates about the different positions of the pawns and what this
+                        reveals about social inequalities in our society.</p>
                 </div>
-                
+
                 <button class="button" onclick="location.reload()">Play Again</button>
             </div>
         </div>
     </div>
     <script src="script.js"></script>
 </body>
+
 </html>

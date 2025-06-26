@@ -89,6 +89,8 @@ socket.on('game-started', (data) => {
     showHostDrawCardButton();
 });
 
+
+
 socket.on('card-drawn', (data) => {
     gameState.currentCard = data.card;
     gameState.phase = 'decisions';
@@ -120,23 +122,23 @@ socket.on('player-decision', (data) => {
 });
 
 socket.on('all-decisions-made', (data) => {
-    gameState.phase = 'moving';
     gameState.players = data.allPlayers;
-    gameState.nextCardType = data.nextCardType;
-
-    // Update player positions
     updatePlayerPositions();
-
-    // Show events if triggered
-    if (data.eventsTriggered && data.eventsTriggered.length > 0) {
-        showEventNotification(data.eventsTriggered);
-    }
-
-    // Check for winner
+    
     if (data.winner) {
         showWinner(data.winner);
+        return;
     }
-
+    
+    // Only show ready for next card if event was processed or no event
+    if (data.eventProcessed !== false) {
+        gameState.nextCardType = data.nextCardType;
+        showHostDrawCardButton();
+    } else {
+        // Show waiting for event decision
+        currentPlayerStatus.textContent = 'Waiting for player to make event decision...';
+    }
+    
     updatePhaseDisplay();
 });
 
@@ -408,6 +410,7 @@ function getCardTypeDisplay(cardType) {
     };
     return cardTypeMap[cardType] || cardType;
 }
+
 
 // Draw card logic for host
 hostDrawCardBtn.addEventListener('click', async () => {
