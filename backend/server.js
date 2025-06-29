@@ -488,7 +488,8 @@ io.on('connection', (socket) => {
       allPlayers: room.getPlayersArray(),
       nextCardType: room.getNextCardType(),
       winner: winner,
-      eventProcessed: true
+      eventProcessed: true,
+      currentPlayer: room.getCurrentPlayer()
     });
 
     if (winner) {
@@ -598,6 +599,7 @@ io.on('connection', (socket) => {
 
       // Prepare for next round
       room.nextPlayer();
+      //gameState.currentPlayer = room.getCurrentPlayer(); // Add this line
       room.cardDrawOrder++;
       room.waitingForVotes = false;
 
@@ -606,7 +608,8 @@ io.on('connection', (socket) => {
         allPlayers: room.getPlayersArray(),
         nextCardType: room.getNextCardType(),
         winner: winner,
-        eventsTriggered: eventsTriggered
+        eventsTriggered: eventsTriggered,
+        currentPlayer: room.getCurrentPlayer()
       });
 
       // ALSO send individual player updates to ensure sync - NEW

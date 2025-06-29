@@ -82,6 +82,8 @@ socket.on('game-started', (data) => {
     gameBoard.style.display = 'block';
     gameControls.style.display = 'block';
     startGameBtn.style.display = 'none';
+    
+    document.getElementById('gameLevel').disabled = true;
 
     updateCurrentPlayer(data.currentPlayer);
     updatePlayerPositions();
@@ -125,6 +127,10 @@ socket.on('all-decisions-made', (data) => {
     gameState.players = data.allPlayers;
     updatePlayerPositions();
     
+    gameState.currentPlayer = data.currentPlayer;
+    updateCurrentPlayer(data.currentPlayer); // Add this line
+    //gameState.phase = 'waiting'; // Add this line
+
     if (data.winner) {
         showWinner(data.winner);
         return;
