@@ -477,7 +477,7 @@ body {
     }
 
     .movement-buttons {
-        flex-direction: column;
+        /*flex-direction: column;*/
         gap: 0.5rem;
     }
 }

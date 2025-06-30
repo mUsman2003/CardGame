@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Social Spiral Game - Player</title>
+    <title>Jogo Espiral Social - Jogador</title>
     <link rel="stylesheet" href="styles.css">
     <script src="/socket.io/socket.io.js"></script>
 </head>
@@ -12,130 +12,130 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🎯 Social Spiral Game</h1>
-            <p>Understanding Social Inequalities</p>
+            <h1>🎯 Jogo Espiral Social</h1>
+            <p>Compreendendo as Desigualdades Sociais</p>
         </div>
 
         <div class="content">
-            <!-- Join Game Form -->
+            <!-- Formulário de Entrada no Jogo -->
             <div id="joinForm">
                 <div class="form-group">
-                    <label for="playerName">Your Name</label>
-                    <input type="text" id="playerName" placeholder="Enter your name" maxlength="20">
+                    <label for="playerName">Seu Nome</label>
+                    <input type="text" id="playerName" placeholder="Digite seu nome" maxlength="20">
                 </div>
 
                 <div class="form-group">
-                    <label for="roomCode">Room Code</label>
-                    <input type="text" id="roomCode" placeholder="Enter room code" maxlength="6"
+                    <label for="roomCode">Código da Sala</label>
+                    <input type="text" id="roomCode" placeholder="Digite o código da sala" maxlength="6"
                         style="text-transform: uppercase;">
                 </div>
 
                 <div class="form-group">
-                    <label>Choose the identity you most identify with:</label>
+                    <label>Escolha a identidade com a qual você mais se identifica:</label>
                     <div id="pawnSelector" class="pawn-selector">
-                        <!-- Pawns will be populated by JavaScript -->
+                        <!-- Peões serão preenchidos pelo JavaScript -->
                     </div>
                 </div>
 
-                <button id="joinBtn" class="button" disabled>Join Game</button>
+                <button id="joinBtn" class="button" disabled>Entrar no Jogo</button>
             </div>
 
-            <!-- Status Messages -->
+            <!-- Mensagens de Status -->
             <div id="statusMessage" style="display: none;"></div>
 
-            <!-- Waiting Room -->
+            <!-- Sala de Espera -->
             <div id="waitingRoom" style="display: none;">
                 <div class="waiting-room">
-                    <h3>Successfully Joined!</h3>
+                    <h3>Entrada Bem-sucedida!</h3>
                     <div class="loading-spinner"></div>
-                    <p>Waiting for teacher to start the game...</p>
+                    <p>Aguardando o professor iniciar o jogo...</p>
                 </div>
 
                 <div class="game-status">
                     <div class="player-info">
                         <div id="playerPawn" class="player-pawn"></div>
                         <div>
-                            <div class="player-name" id="playerDisplayName">Player</div>
-                            <div class="position-display">Ring: <span id="playerPosition">21</span></div>
+                            <div class="player-name" id="playerDisplayName">Jogador</div>
+                            <div class="position-display">Anel: <span id="playerPosition">21</span></div>
                         </div>
                     </div>
                 </div>
 
                 <div class="other-players">
-                    <h4>Other Players (<span id="otherPlayerCount">0</span>)</h4>
+                    <h4>Outros Jogadores (<span id="otherPlayerCount">0</span>)</h4>
                     <div id="otherPlayersList" class="players-list"></div>
                 </div>
             </div>
 
-            <!-- Game Active -->
+            <!-- Jogo Ativo -->
             <div id="gameActive" style="display: none;">
                 <div class="game-info">
-                    <div id="difficultyBadge" class="difficulty-badge difficulty-basic">Basic Level</div>
-                    <h4>Game Instructions</h4>
-                    <p>When a card is drawn by the host, decide whether to move forward or backward based on your
-                        experience with the situation described.</p>
+                    <div id="difficultyBadge" class="difficulty-badge difficulty-basic">Nível Básico</div>
+                    <h4>Instruções do Jogo</h4>
+                    <p>Quando uma carta for sorteada pelo anfitrião, decida se quer avançar ou recuar com base na sua
+                        experiência com a situação descrita.</p>
                 </div>
 
                 <div class="game-status">
                     <div class="player-info">
                         <div id="gamePlayerPawn" class="player-pawn"></div>
                         <div>
-                            <div class="player-name" id="gamePlayerName">Player</div>
-                            <div class="position-display">Ring: <span id="gamePlayerPosition">21</span></div>
+                            <div class="player-name" id="gamePlayerName">Jogador</div>
+                            <div class="position-display">Anel: <span id="gamePlayerPosition">21</span></div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Turn Information -->
+                <!-- Informação do Turno -->
                 <div id="turnIndicator" class="turn-indicator turn-waiting">
-                    Waiting for host to draw a card...
+                    Aguardando o anfitrião sortear uma carta...
                 </div>
 
                 <div id="currentTurnInfo" class="current-turn-info" style="display: none;">
-                    Current turn: <span id="currentPlayerName"></span>
+                    Turno atual: <span id="currentPlayerName"></span>
                 </div>
 
-                <!-- Waiting for Card -->
+                <!-- Aguardando Carta -->
                 <div id="waitingForCard" style="display: block;">
                     <div
                         style="text-align: center; padding: 20px; background: #f8f9fa; border-radius: 8px; margin: 20px 0;">
                         <div style="font-size: 24px; margin-bottom: 10px;">⏳</div>
-                        <div style="font-size: 18px; color: #666;">Waiting for host to draw a card...</div>
+                        <div style="font-size: 18px; color: #666;">Aguardando o anfitrião sortear uma carta...</div>
                     </div>
                 </div>
 
-                <!-- Voting Section - ONLY Forward/Backward Options -->
+                <!-- Seção de Votação - APENAS Opções Avançar/Recuar -->
                 <div id="votingSection" style="display: none;">
                     <div
                         style="text-align: center; padding: 20px; background: #e3f2fd; border-radius: 8px; margin: 20px 0;">
-                        <div style="font-size: 18px; margin-bottom: 15px; font-weight: bold;">A card has been drawn!
+                        <div style="font-size: 18px; margin-bottom: 15px; font-weight: bold;">Uma carta foi sorteada!
                         </div>
                         <div style="font-size: 14px; color: #666; margin-bottom: 20px;">
-                            The host has drawn a card. Based on your identity and experiences, choose your response:
+                            O anfitrião sorteou uma carta. Com base na sua identidade e experiências, escolha sua resposta:
                         </div>
 
                         <div class="movement-buttons" style="display: flex; gap: 15px; justify-content: center;">
                             <button id="moveForwardBtn" class="button move-forward"
                                 style="flex: 1; max-width: 200px; padding: 15px;">
-                                ⬆️ Move Forward
+                                ⬆️ Avançar
                             </button>
 
                             <button id="moveBackwardBtn" class="button move-backward"
                                 style="flex: 1; max-width: 200px; padding: 15px;">
-                                ⬇️ Move Backward
+                                ⬇️ Recuar
                             </button>
                         </div>
                     </div>
                 </div>
 
-                <!-- Vote Confirmed -->
+                <!-- Voto Confirmado -->
                 <div id="voteConfirmed" style="display: none;">
                     <div
                         style="text-align: center; padding: 20px; background: #e8f5e8; border-radius: 8px; margin: 20px 0;">
                         <div style="font-size: 24px; margin-bottom: 10px;">✅</div>
-                        <div style="font-size: 18px; color: #2e7d32; font-weight: bold;">Vote Submitted!</div>
+                        <div style="font-size: 18px; color: #2e7d32; font-weight: bold;">Voto Enviado!</div>
                         <div style="font-size: 14px; color: #666; margin-top: 10px;">
-                            Waiting for other players to vote...
+                            Aguardando outros jogadores votarem...
                         </div>
                         <div id="voteChoice"
                             style="font-size: 16px; margin-top: 10px; padding: 10px; background: #f1f8e9; border-radius: 4px;">
@@ -143,29 +143,29 @@
                     </div>
                 </div>
                 <div id="eventChoiceSection" class="event-choice-section" style="display: none;">
-                    <h3>Event Triggered!</h3>
+                    <h3>Evento Acionado!</h3>
                     <p id="eventDescription"></p>
                     <div id="eventChoices" class="event-choices"></div>
                 </div>
 
                 <div class="other-players">
-                    <h4>Other Players</h4>
+                    <h4>Outros Jogadores</h4>
                     <div id="gameOtherPlayersList" class="players-list"></div>
                 </div>
             </div>
 
-            <!-- Winner Announcement -->
+            <!-- Anúncio do Vencedor -->
             <div id="winnerAnnouncement" class="winner-announcement" style="display: none;">
-                <h2>🏆 Game Complete!</h2>
+                <h2>🏆 Jogo Concluído!</h2>
                 <p id="winnerText"></p>
 
                 <div class="reflection-prompt">
-                    <h4>Time for Reflection</h4>
-                    <p>Discuss with your teacher and classmates about the different positions of the pawns and what this
-                        reveals about social inequalities in our society.</p>
+                    <h4>Hora da Reflexão</h4>
+                    <p>Discuta com seu professor e colegas sobre as diferentes posições dos peões e o que isso
+                        revela sobre as desigualdades sociais em nossa sociedade.</p>
                 </div>
 
-                <button class="button" onclick="location.reload()">Play Again</button>
+                <button class="button" onclick="location.reload()">Jogar Novamente</button>
             </div>
         </div>
     </div>

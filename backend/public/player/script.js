@@ -12,21 +12,21 @@ let gameState = {
     myVote: null
 };
 
-// Available identity pawns
+// Peões de identidade disponíveis
 const IDENTITY_PAWNS = [
-    { id: 'white_man', icon: '👨🏻', label: 'White Man', color: '#3498db' },
-    { id: 'white_woman', icon: '👩🏻', label: 'White Woman', color: '#e74c3c' },
-    { id: 'black_man', icon: '👨🏿', label: 'Black Man', color: '#8e44ad' },
-    { id: 'black_woman', icon: '👩🏿', label: 'Black Woman', color: '#e67e22' },
+    { id: 'white_man', icon: '👨🏻', label: 'Homem Branco', color: '#3498db' },
+    { id: 'white_woman', icon: '👩🏻', label: 'Mulher Branca', color: '#e74c3c' },
+    { id: 'black_man', icon: '👨🏿', label: 'Homem Negro', color: '#8e44ad' },
+    { id: 'black_woman', icon: '👩🏿', label: 'Mulher Negra', color: '#e67e22' },
     { id: 'lgbtiqa', icon: '🏳️‍🌈', label: 'LGBTIQA+', color: '#f39c12' },
-    { id: 'blind', icon: '🦯', label: 'Blind Person', color: '#16a085' },
-    { id: 'deaf', icon: '🤟', label: 'Deaf Person', color: '#2980b9' },
-    { id: 'disabled', icon: '♿', label: 'Physically Disabled', color: '#c0392b' },
-    { id: 'elderly', icon: '👴', label: 'Elderly Person', color: '#7f8c8d' },
-    { id: 'neutral', icon: '👤', label: 'Neutral', color: '#34495e' }
+    { id: 'blind', icon: '🦯', label: 'Pessoa Cega', color: '#16a085' },
+    { id: 'deaf', icon: '🤟', label: 'Pessoa Surda', color: '#2980b9' },
+    { id: 'disabled', icon: '♿', label: 'Pessoa com Deficiência Física', color: '#c0392b' },
+    { id: 'elderly', icon: '👴', label: 'Pessoa Idosa', color: '#7f8c8d' },
+    { id: 'neutral', icon: '👤', label: 'Neutro', color: '#34495e' }
 ];
 
-// DOM elements
+// Elementos DOM
 const joinForm = document.getElementById('joinForm');
 const playerNameInput = document.getElementById('playerName');
 const roomCodeInput = document.getElementById('roomCode');
@@ -44,7 +44,7 @@ const moveForwardBtn = document.getElementById('moveForwardBtn');
 const moveBackwardBtn = document.getElementById('moveBackwardBtn');
 const voteChoice = document.getElementById('voteChoice');
 
-// Initialize pawn selector
+// Inicializar seletor de peões
 function initializePawnSelector() {
     pawnSelector.innerHTML = '';
     IDENTITY_PAWNS.forEach(pawn => {
@@ -59,7 +59,7 @@ function initializePawnSelector() {
     });
 }
 
-// Select pawn
+// Selecionar peão
 function selectPawn(pawn) {
     const pawnOptions = document.querySelectorAll('.pawn-option');
     pawnOptions.forEach(option => option.classList.remove('selected'));
@@ -74,7 +74,7 @@ function selectPawn(pawn) {
     }
 }
 
-// Update join button state
+// Atualizar estado do botão de entrada
 function updateJoinButton() {
     const canJoin = playerNameInput.value.trim() &&
         roomCodeInput.value.trim() &&
@@ -102,7 +102,7 @@ joinBtn.addEventListener('click', () => {
     }
 });
 
-// ONLY Forward/Backward voting options
+// APENAS opções de votação Avançar/Recuar
 moveForwardBtn.addEventListener('click', () => {
     makeVote('forward');
 });
@@ -111,69 +111,68 @@ moveBackwardBtn.addEventListener('click', () => {
     makeVote('backward');
 });
 
-// Make vote - ONLY forward or backward
+// Fazer voto - APENAS avançar ou recuar
 function makeVote(direction) {
     if (gameState.hasVoted) return;
 
     const vote = {
         direction: direction,
-        description: direction === 'forward' ? 'Move Forward' : 'Move Backward'
+        description: direction === 'forward' ? 'Avançar' : 'Recuar'
     };
 
     socket.emit('player-vote', vote);
 
-    // Update UI
+    // Atualizar UI
     gameState.hasVoted = true;
     gameState.myVote = vote;
 
-    // Hide voting section, show confirmation
+    // Ocultar seção de votação, mostrar confirmação
     votingSection.style.display = 'none';
     voteConfirmed.style.display = 'block';
-    voteChoice.textContent = `You chose: ${vote.description}`;
+    voteChoice.textContent = `Você escolheu: ${vote.description}`;
 
-    // Disable buttons
+    // Desabilitar botões
     moveForwardBtn.disabled = true;
     moveBackwardBtn.disabled = true;
-
 }
 
-// Update display based on game state
+// Atualizar exibição baseado no estado do jogo
 function updateGameDisplay() {
     if (!gameState.gameStarted) return;
 
     if (gameState.cardDrawn && !gameState.hasVoted) {
-        // Show voting options
+        // Mostrar opções de votação
         waitingForCard.style.display = 'none';
         votingSection.style.display = 'block';
         voteConfirmed.style.display = 'none';
-        turnIndicator.textContent = 'Card drawn - make your choice!';
+        turnIndicator.textContent = 'Carta sorteada - faça sua escolha!';
     } else if (gameState.hasVoted) {
-        // Show vote confirmation
+        // Mostrar confirmação de voto
         waitingForCard.style.display = 'none';
         votingSection.style.display = 'none';
         voteConfirmed.style.display = 'block';
-        turnIndicator.textContent = 'Waiting for other players to vote...';
+        turnIndicator.textContent = 'Aguardando outros jogadores votarem...';
     } else {
-        // Waiting for card
+        // Aguardando carta
         waitingForCard.style.display = 'block';
         votingSection.style.display = 'none';
         voteConfirmed.style.display = 'none';
-        turnIndicator.textContent = 'Waiting for host to draw a card...';
+        turnIndicator.textContent = 'Aguardando o anfitrião sortear uma carta...';
     }
 }
 
 socket.on('event-choice-required', (data) => {
-    // Show event choice UI
+    // Mostrar UI de escolha de evento
     showEventChoices(data.event, data.choices);
 });
 
-// Socket events
+// Eventos de socket
 socket.on('joined-room', (data) => {
     gameState.playerData = data.playerData;
     gameState.roomCode = data.roomCode;
     gameState.gameLevel = data.gameLevel || 'basic';
 
-    showStatus('Successfully joined the game!', 'success');
+    showStatus('Entrada no jogo bem-sucedida!', 'success');
     joinForm.style.display = 'none';
     waitingRoom.style.display = 'block';
 
@@ -212,12 +211,12 @@ socket.on('card-drawn', (data) => {
     gameState.hasVoted = false;
     gameState.myVote = null;
 
-    // Reset buttons
+    // Resetar botões
     moveForwardBtn.disabled = false;
     moveBackwardBtn.disabled = false;
 
-    // Do NOT show card description to player
-    // Only show voting options
+    // NÃO mostrar descrição da carta ao jogador
+    // Apenas mostrar opções de votação
     updateGameDisplay();
 });
 
@@ -241,33 +240,33 @@ socket.on('game-ended', (data) => {
 });
 
 socket.on('host-disconnected', () => {
-    showStatus('Teacher disconnected. Game ended.', 'error');
+    showStatus('Professor desconectado. Jogo encerrado.', 'error');
     setTimeout(() => location.reload(), 3000);
 });
 
-// Add this new socket event handler to the existing player script.js
+// Adicionar este novo manipulador de evento de socket ao script.js do jogador existente
 socket.on('player-position-updated', (data) => {
-    // Update the current player's data
+    // Atualizar dados do jogador atual
     if (data.playerData && data.playerData.id === gameState.playerData?.id) {
         gameState.playerData.position = data.playerData.position;
         updateGamePlayerDisplay();
     }
     
-    // Update all players data
+    // Atualizar dados de todos os jogadores
     if (data.allPlayers) {
         gameState.players = data.allPlayers;
         updateOtherPlayersDisplay();
     }
 });
 
-// Modify the existing all-votes-received event handler
+// Modificar o manipulador de evento all-votes-received existente
 socket.on('all-decisions-made', (data) => {
     gameState.players = data.allPlayers;
     gameState.cardDrawn = false;
     gameState.hasVoted = false;
     gameState.myVote = null;
 
-    // Update current player data from the updated players array
+    // Atualizar dados do jogador atual do array de jogadores atualizado
     const updatedPlayerData = gameState.players.find(p => p.id === gameState.playerData?.id);
     if (updatedPlayerData) {
         gameState.playerData = updatedPlayerData;
@@ -282,7 +281,7 @@ socket.on('all-decisions-made', (data) => {
     }
 });
 
-// Functions
+// Funções
 function showStatus(message, type) {
     statusMessage.textContent = message;
     statusMessage.className = `status-message status-${type}`;
@@ -304,7 +303,7 @@ function updatePlayerDisplay() {
     }
 }
 
-// Also modify the updateGamePlayerDisplay function to ensure proper updates
+// Também modificar a função updateGamePlayerDisplay para garantir atualizações adequadas
 function updateGamePlayerDisplay() {
     const currentPlayerData = gameState.players.find(p => p.id === gameState.playerData?.id) || gameState.playerData;
     if (currentPlayerData) {
@@ -321,7 +320,7 @@ function updateOtherPlayersDisplay() {
     const otherPlayers = gameState.players.filter(p => p.id !== gameState.playerData?.id);
     document.getElementById('otherPlayerCount').textContent = otherPlayers.length;
 
-    // Update waiting room list
+    // Atualizar lista da sala de espera
     const otherPlayersList = document.getElementById('otherPlayersList');
     if (otherPlayersList) {
         otherPlayersList.innerHTML = '';
@@ -333,14 +332,14 @@ function updateOtherPlayersDisplay() {
                         <div class="other-player-pawn">${pawn ? pawn.icon : '👤'}</div>
                         <div class="player-details">
                             <div class="player-name">${player.name}</div>
-                            <div class="player-position">Ring: ${player.position}</div>
+                            <div class="player-position">Anel: ${player.position}</div>
                         </div>
                     `;
             otherPlayersList.appendChild(playerElement);
         });
     }
 
-    // Update game view list
+    // Atualizar lista da visualização do jogo
     const gameOtherPlayersList = document.getElementById('gameOtherPlayersList');
     if (gameOtherPlayersList) {
         gameOtherPlayersList.innerHTML = '';
@@ -352,7 +351,7 @@ function updateOtherPlayersDisplay() {
                         <div class="other-player-pawn">${pawn ? pawn.icon : '👤'}</div>
                         <div class="player-details">
                             <div class="player-name">${player.name}</div>
-                            <div class="player-position">Ring: ${player.position}</div>
+                            <div class="player-position">Anel: ${player.position}</div>
                         </div>
                     `;
             gameOtherPlayersList.appendChild(playerElement);
@@ -365,12 +364,12 @@ function updateDifficultyDisplay() {
     difficultyBadge.className = `difficulty-badge difficulty-${gameState.gameLevel}`;
 
     const levelNames = {
-        'basic': 'Basic Level',
-        'intermediate': 'Intermediate Level',
-        'advanced': 'Advanced Level'
+        'basic': 'Nível Básico',
+        'intermediate': 'Nível Intermediário',
+        'advanced': 'Nível Avançado'
     };
 
-    difficultyBadge.textContent = levelNames[gameState.gameLevel] || 'Basic Level';
+    difficultyBadge.textContent = levelNames[gameState.gameLevel] || 'Nível Básico';
 }
 
 function updateAvailablePawns(availablePawns) {
@@ -395,22 +394,23 @@ function showWinner(winner) {
     const isWinner = winner.id === gameState.playerData?.id;
 
     if (isWinner) {
-        winnerText.innerHTML = `🎉 You reached the center first! 🎉<br>Your journey through the spiral is complete.`;
+        winnerText.innerHTML = `🎉 Você chegou ao centro primeiro! 🎉<br>Sua jornada através da espiral está completa.`;
     } else {
-        winnerText.innerHTML = `${winner.name} reached the center first.<br>Everyone's journey tells a different story.`;
+        winnerText.innerHTML = `${winner.name} chegou ao centro primeiro.<br>A jornada de cada um conta uma história diferente.`;
     }
 
     gameActive.style.display = 'none';
     winnerAnnouncement.style.display = 'block';
 }
+
 function showEventChoices(event, choices) {
-    // Hide other UI elements
+    // Ocultar outros elementos da UI
     votingSection.style.display = 'none';
     voteConfirmed.style.display = 'none';
     waitingForCard.style.display = 'none';
     
-    // Show event choice UI
-    const eventChoiceSection = document.getElementById('eventChoiceSection'); // You'll need to add this to HTML
+    // Mostrar UI de escolha de evento
+    const eventChoiceSection = document.getElementById('eventChoiceSection');
     eventChoiceSection.style.display = 'block';
     
     document.getElementById('eventDescription').textContent = `${event.name}: ${event.description}`;
@@ -434,12 +434,12 @@ function makeEventChoice(eventType, decision, targetId = null) {
         targetPlayerId: targetId
     });
     
-    // Hide event choice UI
+    // Ocultar UI de escolha de evento
     document.getElementById('eventChoiceSection').style.display = 'none';
     
-    // Show waiting message
-    turnIndicator.textContent = 'Event choice made - processing...';
+    // Mostrar mensagem de espera
+    turnIndicator.textContent = 'Escolha de evento feita - processando...';
 }
 
-// Initialize
+// Inicializar
 initializePawnSelector();
