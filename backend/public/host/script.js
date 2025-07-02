@@ -82,7 +82,7 @@ socket.on('game-started', (data) => {
     gameBoard.style.display = 'block';
     gameControls.style.display = 'block';
     startGameBtn.style.display = 'none';
-
+    
     document.getElementById('gameLevel').disabled = true;
 
     updateCurrentPlayer(data.currentPlayer);
@@ -125,7 +125,7 @@ socket.on('player-decision', (data) => {
 socket.on('all-decisions-made', (data) => {
     gameState.players = data.allPlayers;
     updatePlayerPositions();
-
+    
     gameState.currentPlayer = data.currentPlayer;
     updateCurrentPlayer(data.currentPlayer);
 
@@ -133,7 +133,7 @@ socket.on('all-decisions-made', (data) => {
         showWinner(data.winner);
         return;
     }
-
+    
     // Mostrar pronto para próxima carta apenas se evento foi processado ou não há evento
     if (data.eventProcessed !== false) {
         gameState.nextCardType = data.nextCardType;
@@ -142,7 +142,7 @@ socket.on('all-decisions-made', (data) => {
         // Mostrar aguardando decisão de evento
         currentPlayerStatus.textContent = 'Aguardando jogador tomar decisão de evento...';
     }
-
+    
     updatePhaseDisplay();
 });
 
@@ -225,7 +225,7 @@ function createSpiralBoard() {
     const boardSize = 600;
     const center = boardSize / 2;
     const eventRings = [5, 10, 15, 20];
-
+    
     // Definir cores dos anéis do exterior (21) ao interior (1) baseado na sua imagem
     const ringColors = [
         '#1f4e79', '#ffffff', '#4472a8', '#ffffff',
@@ -249,7 +249,7 @@ function createSpiralBoard() {
         ringElement.style.height = `${size}px`;
         ringElement.style.left = `${center - radius}px`;
         ringElement.style.top = `${center - radius}px`;
-
+        
         // Aplicar cor do array
         const colorIndex = 21 - ring; // Converter número do anel para índice do array
         ringElement.style.backgroundColor = ringColors[colorIndex];
@@ -267,7 +267,7 @@ function updatePlayerPositions() {
         const pawn = document.createElement('div');
         pawn.className = 'pawn';
         pawn.title = `${player.name} (${player.identityName}) - Ring ${player.position}`;
-
+        
         // Use icon instead of background color
         pawn.textContent = player.icon;
         pawn.style.fontSize = '20px';
@@ -289,15 +289,15 @@ function updatePlayerPositions() {
             const ringRadius = parseFloat(ring.style.width) / 2;
             const ringCenterX = parseFloat(ring.style.left) + ringRadius;
             const ringCenterY = parseFloat(ring.style.top) + ringRadius;
-
+            
             // Position pawns around the ring circumference
             const totalPlayers = gameState.players.length;
             const angleStep = (2 * Math.PI) / totalPlayers;
             const angle = index * angleStep;
-
+            
             // Place pawns on the ring border (not inside)
             const pawnDistanceFromCenter = Math.max(25, ringRadius - 8); // Minimum distance or slightly inside ring
-
+            
             const pawnX = ringCenterX + Math.cos(angle) * pawnDistanceFromCenter;
             const pawnY = ringCenterY + Math.sin(angle) * pawnDistanceFromCenter;
 
@@ -327,12 +327,12 @@ function updatePhaseDisplay() {
 
     switch (gameState.phase) {
         case 'waiting':
-            currentPlayerStatus.textContent = 'Pronto para puxar próxima carta';
+            currentPlayerStatus.textContent = 'Pronto para retirar a próxima carta';
             break;
         case 'decisions':
             cardDrawnDisplay.style.display = 'block';
             decisionPhase.style.display = 'block';
-            currentPlayerStatus.textContent = 'Carta puxada - aguardando todos os jogadores votarem';
+            currentPlayerStatus.textContent = 'Carta retirada - aguardando a decisão de todos os jogadores';
             break;
         case 'moving':
             currentPlayerStatus.textContent = 'Todos os jogadores votaram - processando movimentos';
@@ -410,7 +410,7 @@ function showHostDrawCardButton() {
     hostDrawCardSection.style.display = 'block';
     hostDrawCardBtn.disabled = false;
     const cardTypeDisplay = getCardTypeDisplay(gameState.nextCardType);
-    hostDrawCardBtn.textContent = `🎴 Puxar Carta de ${cardTypeDisplay}`;
+    hostDrawCardBtn.textContent = `🎴 Retirar Carta. ${cardTypeDisplay}`;
 }
 
 function hideHostDrawCardButton() {
@@ -438,13 +438,13 @@ hostDrawCardBtn.addEventListener('click', async () => {
     // Escolher uma carta aleatória da categoria correta
     const cardType = gameState.nextCardType;
     const cards = HOST_SAMPLE_CARDS[cardType] || [];
-
+    
     if (cards.length === 0) {
         console.error('Nenhuma carta disponível para o tipo:', cardType);
         hostDrawCardBtn.disabled = false;
         return;
     }
-
+    
     const randomCard = cards[Math.floor(Math.random() * cards.length)];
 
     // Enviar os dados da carta no formato correto esperado pelo servidor
@@ -463,7 +463,7 @@ hostDrawCardBtn.addEventListener('click', async () => {
 async function loadCards() {
     try {
         const cardTypes = ['privilege-discrimination', 'social-policies', 'behaviors'];
-
+        
         for (const cardType of cardTypes) {
             const response = await fetch(`./cards/${cardType}.json`);
             if (response.ok) {
@@ -473,7 +473,7 @@ async function loadCards() {
                 HOST_SAMPLE_CARDS[cardType] = [];
             }
         }
-
+        
         console.log('Cartas carregadas com sucesso:', HOST_SAMPLE_CARDS);
     } catch (error) {
         console.error('Erro ao carregar cartas:', error);
