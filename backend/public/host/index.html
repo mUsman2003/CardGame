@@ -13,7 +13,7 @@
     <div class="container">
         <div class="header">
             <div class="logo">
-                <span class="symbol">≠</span><span class="text">gual</span>
+                <img src="logo.png" alt="Gual Logo" class="logo-image">
             </div>
             <p class="subtitle">Painel de Controle do Anfitrião</p>
         </div>
@@ -25,19 +25,18 @@
             <div id="roomInfo" style="display: none;">
                 <h3>Código da Sala</h3>
                 <div id="roomCode" class="room-code">----</div>
-                <p>Compartilhe este código com os jogadores para que possam entrar pelos seus telefones</p>
+                <p>Partilhe este código com os jogadores para que possam entrar pelos seus telefones</p>
 
                 <div class="game-level">
                     <label for="gameLevel">Nível do Jogo:</label>
                     <select id="gameLevel" class="level-select">
                         <option value="basic">Básico (Apenas Privilégio/Discriminação)</option>
-                        <option value="intermediate">Intermediário (+ Políticas Sociais)</option>
+                        <option value="intermediate">Intermédio (+ Políticas Sociais)</option>
                         <option value="advanced">Avançado (Todas as categorias + Eventos)</option>
                     </select>
                 </div>
 
-                <button id="startGameBtn" class="button" disabled>Iniciar Jogo (Precisa de pelo menos 2
-                    jogadores)</button>
+                <button id="startGameBtn" class="button" disabled>Iniciar Jogo (Precisa de, pelo menos, 2 jogadores)</button>
             </div>
         </div>
 
@@ -45,61 +44,64 @@
             <h3>Jogadores Conectados (<span id="playerCount">0</span>)</h3>
             <div id="playersGrid" class="players-grid"></div>
         </div>
+        <div class="splitter">
 
-        <div id="game-board" class="game-board">
-            <div class="spiral-board" id="spiralBoard">
-                <!-- Os anéis serão gerados pelo JavaScript -->
-            </div>
-        </div>
-
-        <div id="game-controls" class="game-controls" style="display: none;">
-            <div id="currentPlayer" class="current-player">
-                <h3>Jogador Atual: <span id="currentPlayerName">-</span></h3>
-                <p id="currentPlayerStatus">Aguardando o anfitrião puxar uma carta...</p>
-            </div>
-
-            <!-- Botão de Puxar Carta do Anfitrião - Sempre Visível Quando o Anfitrião Pode Puxar -->
-            <div id="hostDrawCardSection" class="host-draw-section"
-                style="display:none; margin: 1.5rem 0; text-align:center; background: #e3f2fd; padding: 20px; border-radius: 8px;">
-                <h3 style="margin-bottom: 15px;">🎴 Pronto para Puxar Carta</h3>
-                <p style="margin-bottom: 20px; color: #666;">Puxe uma carta para todos os jogadores responderem</p>
-                <button id="hostDrawCardBtn" class="button" style="font-size:1.2rem; padding: 15px 30px;">🎴 Puxar
-                    Carta</button>
-            </div>
-
-            <!-- Exibição da Carta Puxada -->
-            <div id="cardDrawnDisplay" class="card-drawn-display"
-                style="display: none; background: #fff3cd; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                <h3 style="color: #856404;">🎴 Carta Puxada!</h3>
-                <div id="cardDescription" class="card-description"
-                    style="background: white; padding: 15px; border-radius: 5px; margin: 15px 0; border-left: 4px solid #ffc107;">
+            <div id="game-board" class="game-board">
+                <div class="spiral-board" id="spiralBoard">
+                    <!-- Os anéis serão gerados pelo JavaScript -->
                 </div>
-                <p style="color: #856404; font-weight: bold;">Todos os jogadores devem agora decidir se movem para
-                    frente ou para trás...</p>
             </div>
 
-            <!-- Fase de Decisão -->
-            <div id="decisionPhase" class="decision-phase" style="display: none;">
-                <h3>⏳ Aguardando Todos os Jogadores Votarem</h3>
-                <div class="progress-indicator">
-                    <div id="decisionProgress">Votos: <span id="decisionsCount">0</span> / <span
-                            id="totalPlayers">0</span></div>
-                    <div class="progress-bar">
-                        <div id="progressFill" class="progress-fill" style="width: 0%"></div>
+            <div id="game-controls" class="game-controls" style="display: none;">
+                <div id="currentPlayer" class="current-player">
+                    <h3>Jogador Atual: <span id="currentPlayerName">-</span></h3>
+                    <p id="currentPlayerStatus">Aguardando o anfitrião puxar uma carta...</p>
+                </div>
+
+                <!-- Botão de Puxar Carta do Anfitrião - Sempre Visível Quando o Anfitrião Pode Puxar -->
+                <div id="hostDrawCardSection" class="host-draw-section"
+                    style="display:none; margin: 1.5rem 0; text-align:center; background: #e3f2fd; padding: 20px; border-radius: 8px;">
+                    <h3 style="margin-bottom: 15px;">🎴 Pronto para Puxar Carta</h3>
+                    <p style="margin-bottom: 20px; color: #666;">Puxe uma carta para todos os jogadores responderem</p>
+                    <button id="hostDrawCardBtn" class="button" style="font-size:1.2rem; padding: 15px 30px;">🎴 Puxar
+                        Carta</button>
+                </div>
+
+                <!-- Exibição da Carta Puxada -->
+                <div id="cardDrawnDisplay" class="card-drawn-display"
+                    style="display: none; background: #fff3cd; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                    <h3 style="color: #856404;">🎴 Carta retirada!</h3>
+                    <div id="cardDescription" class="card-description"
+                        style="background: white; padding: 15px; border-radius: 5px; margin: 15px 0; border-left: 4px solid #ffc107;">
                     </div>
+                    <p style="color: #856404; font-weight: bold;">Todos os jogadores devem agora decidir se movem para
+                        frente ou para trás...</p>
                 </div>
-                <div id="playerDecisions" class="player-decisions"></div>
-                <button id="proceedBtn" class="button" onclick="proceedToNextTurn()" style="display: none;">
-                    Processar Movimentos e Continuar
-                </button>
-            </div>
 
-            <div id="eventNotification" class="event-notification">
-                <h4>Evento Ativado!</h4>
-                <p id="eventText"></p>
+
             </div>
         </div>
 
+        <!-- Fase de Decisão -->
+        <div id="decisionPhase" class="decision-phase" style="display: none;">
+            <h3>⏳ Aguardando Todos os Jogadores Votarem</h3>
+            <div class="progress-indicator">
+                <div id="decisionProgress">Votos: <span id="decisionsCount">0</span> / <span id="totalPlayers">0</span>
+                </div>
+                <div class="progress-bar">
+                    <div id="progressFill" class="progress-fill" style="width: 0%"></div>
+                </div>
+            </div>
+            <div id="playerDecisions" class="player-decisions"></div>
+            <button id="proceedBtn" class="button" onclick="proceedToNextTurn()" style="display: none;">
+                Processar Movimentos e Continuar
+            </button>
+        </div>
+
+        <div id="eventNotification" class="event-notification">
+            <h4>Evento Ativado!</h4>
+            <p id="eventText"></p>
+        </div>
         <div id="winner-announcement" class="winner-announcement">
             <h2>🏆 Fim de Jogo!</h2>
             <p id="winnerText"></p>

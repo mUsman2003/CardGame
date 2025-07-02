@@ -451,4 +451,8 @@
                 grid-template-columns: 1fr;
             }
         }
-        
+        .splitter{
+            display: flex;             /* Arrange children side-by-side */
+      justify-content: center;   /* Center the two divs horizontally in the container */
+      gap: 20px;                 /* Optional: space between divs */
+        }
