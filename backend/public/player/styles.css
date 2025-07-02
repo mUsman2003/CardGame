@@ -16,7 +16,7 @@ body {
     margin: 0 auto;
     background: white;
     border-radius: 20px;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
     overflow: hidden;
 }
 
@@ -52,7 +52,8 @@ body {
     color: #333;
 }
 
-.form-group input, .form-group select {
+.form-group input,
+.form-group select {
     width: 100%;
     padding: 12px 15px;
     border: 2px solid #e1e5e9;
@@ -61,7 +62,8 @@ body {
     transition: all 0.3s ease;
 }
 
-.form-group input:focus, .form-group select:focus {
+.form-group input:focus,
+.form-group select:focus {
     outline: none;
     border-color: #3498db;
     box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
@@ -136,7 +138,7 @@ body {
 
 .button:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
 }
 
 .button:disabled {
@@ -228,7 +230,7 @@ body {
     justify-content: center;
     font-size: 1.5rem;
     background: white;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .position-display {
@@ -261,8 +263,13 @@ body {
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 .game-info {
@@ -333,7 +340,7 @@ body {
     align-items: center;
     gap: 1rem;
     border: 2px solid #ecf0f1;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
 
 .other-player-pawn {
@@ -380,9 +387,17 @@ body {
 }
 
 @keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.02); }
-    100% { transform: scale(1); }
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.02);
+    }
+
+    100% {
+        transform: scale(1);
+    }
 }
 
 .card-display {
@@ -467,11 +482,11 @@ body {
         border-radius: 0;
         min-height: 100vh;
     }
-    
+
     .pawn-selector {
         grid-template-columns: 1fr;
     }
-    
+
     .pawn-option {
         padding: 0.8rem;
     }
@@ -484,19 +499,39 @@ body {
 
 /* 2. Card pop animation */
 @keyframes card-pop {
-    0% { transform: scale(0.95); box-shadow: 0 0 0 rgba(243,156,18,0.0); }
-    60% { transform: scale(1.05); box-shadow: 0 8px 32px rgba(243,156,18,0.18); }
-    100% { transform: scale(1); box-shadow: 0 4px 24px rgba(243,156,18,0.12); }
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 rgba(243, 156, 18, 0.0);
+    }
+
+    60% {
+        transform: scale(1.05);
+        box-shadow: 0 8px 32px rgba(243, 156, 18, 0.18);
+    }
+
+    100% {
+        transform: scale(1);
+        box-shadow: 0 4px 24px rgba(243, 156, 18, 0.12);
+    }
 }
 
 /* 3. Pulse for movement buttons */
 .movement-buttons .button:not(:disabled) {
     animation: pulse-move 1.2s infinite;
 }
+
 @keyframes pulse-move {
-    0% { box-shadow: 0 0 0 0 rgba(39,174,96,0.2); }
-    70% { box-shadow: 0 0 0 10px rgba(39,174,96,0.0); }
-    100% { box-shadow: 0 0 0 0 rgba(39,174,96,0.0); }
+    0% {
+        box-shadow: 0 0 0 0 rgba(39, 174, 96, 0.2);
+    }
+
+    70% {
+        box-shadow: 0 0 0 10px rgba(39, 174, 96, 0.0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(39, 174, 96, 0.0);
+    }
 }
 
 /* 4. Disabled style for movement buttons */
@@ -510,7 +545,9 @@ body {
 }
 
 /* 5. Ensure .card-display is visible when shown */
-.card-display { display: block; }
+.card-display {
+    display: block;
+}
 
 #cardDrawSection {
     display: block !important;
@@ -525,7 +562,7 @@ body {
     margin: 0 auto 1rem auto;
     font-size: 1.3rem;
     font-weight: bold;
-    box-shadow: 0 2px 12px rgba(243,156,18,0.10);
+    box-shadow: 0 2px 12px rgba(243, 156, 18, 0.10);
 }
 
 /* Event Choice Section Styles */
@@ -690,10 +727,12 @@ body {
         opacity: 0;
         transform: scale(0.9) translateY(20px);
     }
+
     50% {
         opacity: 0.8;
         transform: scale(1.02) translateY(-5px);
     }
+
     100% {
         opacity: 1;
         transform: scale(1) translateY(0);
@@ -701,10 +740,13 @@ body {
 }
 
 @keyframes pulse-glow {
-    0%, 100% {
+
+    0%,
+    100% {
         transform: scale(1);
         filter: brightness(1);
     }
+
     50% {
         transform: scale(1.2);
         filter: brightness(1.3);
@@ -715,6 +757,7 @@ body {
     0% {
         transform: translateX(-100%) translateY(-100%) rotate(45deg);
     }
+
     100% {
         transform: translateX(100%) translateY(100%) rotate(45deg);
     }
@@ -726,31 +769,39 @@ body {
         padding: 1.5rem 1rem;
         margin: 1rem 0;
     }
-    
+
     .event-choice-section h3 {
         font-size: 1.5rem;
         flex-direction: column;
         gap: 0.2rem;
     }
-    
+
     .event-choice-section h3::before,
     .event-choice-section h3::after {
         font-size: 1.5rem;
     }
-    
+
     #eventDescription {
         padding: 1rem;
         font-size: 1rem;
     }
-    
+
     .event-choices {
         gap: 0.8rem;
     }
-    
+
     .event-choice-btn {
         padding: 0.8rem 1rem;
         font-size: 1rem;
         min-height: 50px;
+    }
+
+    .logo {
+        font-size: 2rem;
+    }
+
+    .subtitle {
+        font-size: 1rem;
     }
 }
 
@@ -770,10 +821,39 @@ body {
 }
 
 @keyframes urgent-pulse {
-    0%, 100% {
+
+    0%,
+    100% {
         box-shadow: 0 8px 32px rgba(255, 152, 0, 0.15);
     }
+
     50% {
         box-shadow: 0 8px 32px rgba(255, 152, 0, 0.3);
     }
 }
+
+.header {
+            text-align: center;
+            background: white;
+            padding: 30px 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .logo .symbol {
+            color: #00a8cc;
+            margin-right: 2px;
+        }
+        
+        .logo .text {
+            color: #7cb342;
+        }
