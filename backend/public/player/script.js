@@ -129,7 +129,7 @@ function makeVote(direction) {
     // Ocultar seção de votação, mostrar confirmação
     votingSection.style.display = 'none';
     voteConfirmed.style.display = 'block';
-    voteChoice.textContent = `Você escolheu: ${vote.description}`;
+    voteChoice.textContent = `Escolheste: ${vote.description}`;
 
     // Desabilitar botões
     moveForwardBtn.disabled = true;
@@ -145,7 +145,7 @@ function updateGameDisplay() {
         waitingForCard.style.display = 'none';
         votingSection.style.display = 'block';
         voteConfirmed.style.display = 'none';
-        turnIndicator.textContent = 'Carta sorteada - faça sua escolha!';
+        turnIndicator.textContent = 'Carta sorteada - faz a tua escolha!';
     } else if (gameState.hasVoted) {
         // Mostrar confirmação de voto
         waitingForCard.style.display = 'none';
