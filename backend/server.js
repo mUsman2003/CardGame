@@ -55,6 +55,7 @@ class GameRoom {
   constructor(hostSocketId) {
     this.id = generateRoomCode();
     this.hostSocketId = hostSocketId;
+    this.disconnectedPlayers = new Map();
     this.players = new Map();
     this.gameStarted = false;
     this.currentPlayerIndex = 0;
@@ -87,6 +88,24 @@ class GameRoom {
     this.currentCard = null; // Rastrear a carta atual
     this.playerDecisions = {}; // Rastrear decisões dos jogadores para a carta atual
     this.waitingForVotes = false; // Rastrear se estamos esperando votos dos jogadores
+  }
+  // Add this new method to GameRoom class
+  findPlayerByNameAndIdentity(playerName, playerIdentity) {
+    // Check active players
+    for (let player of this.players.values()) {
+      if (player.name === playerName && player.identity === playerIdentity) {
+        return { player, isActive: true };
+      }
+    }
+
+    // Check disconnected players
+    for (let player of this.disconnectedPlayers.values()) {
+      if (player.name === playerName && player.identity === playerIdentity) {
+        return { player, isActive: false };
+      }
+    }
+
+    return null;
   }
 
   addPlayer(socketId, playerData) {
@@ -338,14 +357,75 @@ io.on('connection', (socket) => {
       return;
     }
 
-    if (room.gameStarted) {
-      socket.emit('join-error', 'Jogo já iniciado');
-      return;
-    }
-
     // Usar playerPawn.id se playerPawn for um objeto, caso contrário usar playerIdentity
     const identityId = playerPawn ? (playerPawn.id || playerPawn) : playerIdentity;
 
+    // Check if this is a reconnection attempt
+    const existingPlayer = room.findPlayerByNameAndIdentity(playerName, identityId);
+
+    if (existingPlayer) {
+      // This is a reconnection
+      if (existingPlayer.isActive) {
+        socket.emit('join-error', 'Jogador já está conectado');
+        return;
+      }
+
+      // Reconnect the player
+      const playerData = existingPlayer.player;
+      playerData.id = socket.id; // Update socket ID
+      playerData.isConnected = true;
+
+      // Move from disconnected to active players
+      room.disconnectedPlayers.delete(playerData.originalId);
+      room.players.set(socket.id, playerData);
+
+      socket.join(roomCode);
+      gameRooms.set(socket.id, roomCode);
+
+      // Send appropriate response based on game state
+      if (room.gameStarted) {
+        socket.emit('joined-room', {
+          roomCode: roomCode,
+          playerData: playerData,
+          gameLevel: room.gameLevel,
+          reconnected: true
+        });
+
+        // Send current game state
+        socket.emit('game-started', {
+          gameLevel: room.gameLevel,
+          currentPlayer: room.getCurrentPlayer(),
+          players: room.getPlayersArray(),
+          nextCardType: room.getNextCardType()
+        });
+      } else {
+        socket.emit('joined-room', {
+          roomCode: roomCode,
+          playerData: playerData,
+          gameLevel: room.gameLevel,
+          reconnected: true
+        });
+      }
+
+      // Update all clients
+      io.to(roomCode).emit('room-updated', {
+        players: room.getPlayersArray(),
+        availableIdentities: room.getAvailableIdentities(),
+        availablePawns: room.getAvailablePawnIds(),
+        gameLevel: room.gameLevel
+      });
+
+      console.log(`Jogador ${playerName} reconectado na sala ${roomCode}`);
+      return;
+    }
+
+    // New player trying to join
+    if (room.gameStarted) {
+      socket.emit('join-error', 'Jogo já iniciado. Apenas jogadores existentes podem reconectar.');
+      return;
+    }
+
+    // Regular join logic for new players
     const result = room.addPlayer(socket.id, {
       name: playerName,
       identity: identityId
@@ -357,7 +437,7 @@ io.on('connection', (socket) => {
     }
 
     socket.join(roomCode);
-    gameRooms.set(socket.id, roomCode); // Mapear socket para sala
+    gameRooms.set(socket.id, roomCode);
 
     // Notificar jogador que entrou com sucesso
     socket.emit('joined-room', {
@@ -653,13 +733,28 @@ io.on('connection', (socket) => {
           console.log(`Anfitrião desconectou, sala ${roomId} fechada`);
         } else {
           // Jogador desconectou
-          room.removePlayer(socket.id);
-          io.to(roomId).emit('room-updated', {
-            players: room.getPlayersArray(),
-            availableIdentities: room.getAvailableIdentities(),
-            availablePawns: room.getAvailablePawnIds()
-          });
-          console.log(`Jogador ${socket.id} desconectou da sala ${roomId}`);
+          const player = room.players.get(socket.id);
+          if (player) {
+            if (room.gameStarted) {
+              // Game is active, move to disconnected players for potential reconnection
+              player.isConnected = false;
+              player.originalId = player.id; // Store original ID
+              room.disconnectedPlayers.set(player.originalId, player);
+              room.players.delete(socket.id);
+
+              console.log(`Jogador ${player.name} desconectou da sala ${roomId} (pode reconectar)`);
+            } else {
+              // Game hasn't started, remove completely
+              room.removePlayer(socket.id);
+              console.log(`Jogador ${socket.id} desconectou da sala ${roomId}`);
+            }
+
+            io.to(roomId).emit('room-updated', {
+              players: room.getPlayersArray(),
+              availableIdentities: room.getAvailableIdentities(),
+              availablePawns: room.getAvailablePawnIds()
+            });
+          }
         }
       }
       gameRooms.delete(socket.id);
