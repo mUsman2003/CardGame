@@ -384,27 +384,49 @@ io.on('connection', (socket) => {
 
       // Send appropriate response based on game state
       if (room.gameStarted) {
+        const hasCardBeenDrawn = room.currentCard !== null;
+        const playerHasVoted = room.playerDecisions[socket.id] !== undefined;
+
+        console.log(`[Reconnection] Player '${playerData.name}' is reconnecting.`);
+        console.log(`[Reconnection] Card drawn? ${hasCardBeenDrawn}, Player has voted? ${playerHasVoted}`);
+
         socket.emit('joined-room', {
           roomCode: roomCode,
           playerData: playerData,
           gameLevel: room.gameLevel,
-          reconnected: true
+          reconnected: true,
+          cardDrawn: hasCardBeenDrawn,
+          hasVoted: playerHasVoted
         });
 
-        // Send current game state
-        socket.emit('game-started', {
-          gameLevel: room.gameLevel,
-          currentPlayer: room.getCurrentPlayer(),
-          players: room.getPlayersArray(),
-          nextCardType: room.getNextCardType()
-        });
+
+        if (room.currentCard) {
+          console.log(`[Reconnection] Sending active card to player ${playerData.name}`);
+
+          socket.emit('card-drawn', {
+            card: room.currentCard,
+            cardDrawnBy: { id: room.hostSocketId, name: 'Host' },
+            nextCardType: room.getNextCardType(),
+            cardType: room.currentCard.category
+          });
+        }
+
       } else {
+        const hasCardBeenDrawn = room.currentCard !== null;
+        const playerHasVoted = room.playerDecisions[socket.id] !== undefined;
+
+        console.log(`[Reconnection] Player '${playerData.name}' is reconnecting.`);
+        console.log(`[Reconnection] Card drawn? ${hasCardBeenDrawn}, Player has voted? ${playerHasVoted}`);
+
         socket.emit('joined-room', {
           roomCode: roomCode,
           playerData: playerData,
           gameLevel: room.gameLevel,
-          reconnected: true
+          reconnected: true,
+          cardDrawn: hasCardBeenDrawn,
+          hasVoted: playerHasVoted
         });
+
       }
 
       // Update all clients

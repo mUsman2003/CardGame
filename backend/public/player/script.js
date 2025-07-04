@@ -171,13 +171,56 @@ socket.on('joined-room', (data) => {
     gameState.playerData = data.playerData;
     gameState.roomCode = data.roomCode;
     gameState.gameLevel = data.gameLevel || 'basic';
+    gameState.hasVoted = data.hasVoted || false;
+    gameState.cardDrawn = data.cardDrawn || false;
 
-    showStatus('Entrada no jogo bem-sucedida!', 'success');
+    // 👇 THIS is what was missing
+    if (data.reconnected) {
+        gameState.gameStarted = true;
+        console.log('[Client] Reconnected mid-game. Setting gameStarted = true');
+    }
+
+    console.log(`[Client] Reconnected to room ${gameState.roomCode}`);
+    console.log(`[Client] Card drawn: ${gameState.cardDrawn}, Voted: ${gameState.hasVoted}`);
+
+    showStatus('Successfully joined the game!', 'success');
     joinForm.style.display = 'none';
-    waitingRoom.style.display = 'block';
 
+    if (gameState.gameStarted || data.reconnected) {
+        waitingRoom.style.display = 'none';
+        gameActive.style.display = 'block';
+
+        if (gameState.cardDrawn) {
+            if (!gameState.hasVoted) {
+                console.log('[Client] Card has been drawn and player has NOT voted. Showing vote buttons.');
+                votingSection.style.display = 'block';
+                voteConfirmed.style.display = 'none';
+                waitingForCard.style.display = 'none';
+                turnIndicator.textContent = 'Card already drawn - make your choice!';
+            } else {
+                console.log('[Client] Card drawn and player HAS already voted. Showing wait message.');
+                votingSection.style.display = 'none';
+                voteConfirmed.style.display = 'block';
+                waitingForCard.style.display = 'none';
+                turnIndicator.textContent = 'You have voted - waiting for others...';
+            }
+        } else {
+            console.log('[Client] No card has been drawn yet. Showing wait message.');
+            votingSection.style.display = 'none';
+            voteConfirmed.style.display = 'none';
+            waitingForCard.style.display = 'block';
+            turnIndicator.textContent = 'Waiting for host to draw a card...';
+        }
+
+        updateGamePlayerDisplay();
+        updateOtherPlayersDisplay();
+    } else {
+        waitingRoom.style.display = 'block';
+    }
     updatePlayerDisplay();
 });
+
+
 
 socket.on('join-error', (error) => {
     showStatus(error, 'error');
@@ -251,7 +294,7 @@ socket.on('player-position-updated', (data) => {
         gameState.playerData.position = data.playerData.position;
         updateGamePlayerDisplay();
     }
-    
+
     // Atualizar dados de todos os jogadores
     if (data.allPlayers) {
         gameState.players = data.allPlayers;
@@ -394,7 +437,7 @@ function showWinner(winner) {
     const isWinner = winner.id === gameState.playerData?.id;
 
     if (isWinner) {
-        winnerText.innerHTML = `🎉 Você chegou ao centro primeiro! 🎉<br>Sua jornada através da espiral está completa.`;
+        winnerText.innerHTML = `🎉 Foste o primeiro a chegar ao último anel!`;
     } else {
         winnerText.innerHTML = `${winner.name} chegou ao centro primeiro.<br>A jornada de cada um conta uma história diferente.`;
     }
@@ -408,16 +451,16 @@ function showEventChoices(event, choices) {
     votingSection.style.display = 'none';
     voteConfirmed.style.display = 'none';
     waitingForCard.style.display = 'none';
-    
+
     // Mostrar UI de escolha de evento
     const eventChoiceSection = document.getElementById('eventChoiceSection');
     eventChoiceSection.style.display = 'block';
-    
+
     document.getElementById('eventDescription').textContent = `${event.name}: ${event.description}`;
-    
+
     const choicesContainer = document.getElementById('eventChoices');
     choicesContainer.innerHTML = '';
-    
+
     choices.forEach(choice => {
         const button = document.createElement('button');
         button.className = 'event-choice-btn';
@@ -433,10 +476,10 @@ function makeEventChoice(eventType, decision, targetId = null) {
         decision: decision,
         targetPlayerId: targetId
     });
-    
+
     // Ocultar UI de escolha de evento
     document.getElementById('eventChoiceSection').style.display = 'none';
-    
+
     // Mostrar mensagem de espera
     turnIndicator.textContent = 'Escolha de evento feita - processando...';
 }
