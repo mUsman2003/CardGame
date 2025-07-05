@@ -279,9 +279,25 @@ socket.on("card-drawn", (data) => {
   gameState.hasVoted = false;
   gameState.myVote = null;
 
-  // Resetar botões
+  // Store card data for button text updates
+  const card = data.card;
+
+  // Reset button states
   moveForwardBtn.disabled = false;
   moveBackwardBtn.disabled = false;
+
+  // Update button text based on card steps
+  if (card.forwardSteps === 0) {
+    moveForwardBtn.innerHTML = "⏸️ Permanecer";
+  } else {
+    moveForwardBtn.innerHTML = "⬆️ Avançar";
+  }
+
+  if (card.backwardSteps === 0) {
+    moveBackwardBtn.innerHTML = "⏸️ Permanecer";
+  } else {
+    moveBackwardBtn.innerHTML = "⬇️ Recuar";
+  }
 
   // NÃO mostrar descrição da carta ao jogador
   // Apenas mostrar opções de votação
