@@ -64,6 +64,7 @@ socket.on("room-created", (data) => {
   playersSection.style.display = "block";
   createRoomBtn.style.display = "none";
   createSpiralBoard();
+  generateQRCode(data.roomCode);
 });
 
 socket.on("room-updated", (data) => {
@@ -226,7 +227,45 @@ function updateStartButton() {
     ? `Iniciar Jogo (${gameState.players.length} jogadores)`
     : "Iniciar Jogo (Precisa de pelo menos 2 jogadores)";
 }
+function generateQRCode(roomCode) {
+  const qrCodeDiv = document.getElementById("qrCode");
+  const qrCodeContainer = document.getElementById("qrCodeContainer");
+  const roomLinkSpan = document.getElementById("roomLink");
 
+  if (!qrCodeDiv || !qrCodeContainer) {
+    console.error("Required elements not found");
+    return;
+  }
+
+  const joinUrl = `${window.location.origin}/player?room=${roomCode}`;
+
+  // Clear previous QR code
+  qrCodeDiv.innerHTML = "";
+
+  // Use simpler QR code generation
+  QRCode.toDataURL(
+    joinUrl,
+    {
+      width: 200,
+      margin: 2,
+    },
+    (err, url) => {
+      if (err) {
+        console.error("QR generation error:", err);
+        return;
+      }
+
+      const img = document.createElement("img");
+      img.src = url;
+      img.alt = `Digitalize para entrar na sala
+ ${roomCode}`;
+      qrCodeDiv.appendChild(img);
+
+      // roomLinkSpan.textContent = joinUrl;
+      qrCodeContainer.style.display = "block";
+    }
+  );
+}
 function createSpiralBoard() {
   const board = document.getElementById("spiralBoard");
   board.innerHTML = "";

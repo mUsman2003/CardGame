@@ -11,6 +11,7 @@ let gameState = {
   hasVoted: false,
   myVote: null,
 };
+let scanner = null;
 
 // Peões de identidade disponíveis
 const IDENTITY_PAWNS = [
@@ -116,6 +117,67 @@ moveForwardBtn.addEventListener("click", () => {
 moveBackwardBtn.addEventListener("click", () => {
   makeVote("backward");
 });
+
+function initQRScanner() {
+  const qrScannerBtn = document.getElementById("qrScannerBtn");
+  if (!qrScannerBtn) return;
+
+  qrScannerBtn.addEventListener("click", startScanner);
+}
+
+function startScanner() {
+  const scannerContainer = document.getElementById("qrScannerContainer");
+  const videoElement = document.getElementById("qrScanner");
+
+  scannerContainer.style.display = "block";
+
+  scanner = new Instascan.Scanner({ video: videoElement });
+
+  scanner.addListener("scan", function (content) {
+    const url = new URL(content);
+    const roomCode = url.searchParams.get("room");
+
+    if (roomCode) {
+      roomCodeInput.value = roomCode;
+      updateJoinButton();
+      stopScanner();
+    }
+  });
+
+  Instascan.Camera.getCameras()
+    .then(function (cameras) {
+      if (cameras.length > 0) {
+        scanner.start(cameras[0]);
+      } else {
+        alert("No cameras found");
+        stopScanner();
+      }
+    })
+    .catch(function (e) {
+      console.error(e);
+      alert("Error accessing camera");
+      stopScanner();
+    });
+}
+
+function stopScanner() {
+  const scannerContainer = document.getElementById("qrScannerContainer");
+  if (scanner) {
+    scanner.stop();
+  }
+  scannerContainer.style.display = "none";
+}
+
+// Add this to check for room code in URL when page loads
+function checkForRoomCodeInURL() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const roomCode = urlParams.get("room");
+
+  if (roomCode) {
+    roomCodeInput.value = roomCode;
+    updateJoinButton();
+  }
+}
 
 // Fazer voto - APENAS avançar ou recuar
 function makeVote(direction) {
@@ -479,4 +541,9 @@ function makeEventChoice(eventType, decision, targetId = null) {
 }
 
 // Inicializar
-initializePawnSelector();
+// initializePawnSelector();
+document.addEventListener("DOMContentLoaded", function () {
+  initializePawnSelector();
+  initQRScanner();
+  checkForRoomCodeInURL();
+});
