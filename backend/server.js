@@ -1,33 +1,33 @@
-const express = require('express');
-const http = require('http');
-const socketIo = require('socket.io');
-const path = require('path');
+const express = require("express");
+const http = require("http");
+const socketIo = require("socket.io");
+const path = require("path");
 
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
     origin: "*",
-    methods: ["GET", "POST"]
-  }
+    methods: ["GET", "POST"],
+  },
 });
 
-const os = require('os');
+const os = require("os");
 
 function getLocalIp() {
   const interfaces = os.networkInterfaces();
   for (const name of Object.keys(interfaces)) {
     for (const iface of interfaces[name]) {
-      if (iface.family === 'IPv4' && !iface.internal) {
+      if (iface.family === "IPv4" && !iface.internal) {
         return iface.address;
       }
     }
   }
-  return '127.0.0.1';
+  return "127.0.0.1";
 }
 
 // Servir arquivos estáticos
-app.use(express.static('public'));
+app.use(express.static("public"));
 
 // Estado do jogo
 const gameRooms = new Map();
@@ -39,16 +39,21 @@ function generateRoomCode() {
 
 // Categorias de identidade disponíveis - atualizado para corresponder às expectativas do cliente
 const IDENTITY_CATEGORIES = [
-  { id: 'white_man', name: 'Homem Branco', color: '#3498db', icon: '👨🏻' },
-  { id: 'white_woman', name: 'Mulher Branca', color: '#e74c3c', icon: '👩🏻' },
-  { id: 'black_man', name: 'Homem Negro', color: '#8e44ad', icon: '👨🏿' },
-  { id: 'black_woman', name: 'Mulher Negra', color: '#e67e22', icon: '👩🏿' },
-  { id: 'lgbtiqa', name: 'LGBTIQA+', color: '#f39c12', icon: '🏳️‍🌈' },
-  { id: 'blind', name: 'Pessoa Cega', color: '#16a085', icon: '🦯' },
-  { id: 'deaf', name: 'Pessoa Surda', color: '#2980b9', icon: '🤟' },
-  { id: 'disabled', name: 'Pessoa com Deficiência Física', color: '#c0392b', icon: '♿' },
-  { id: 'elderly', name: 'Pessoa Idosa', color: '#7f8c8d', icon: '👴' },
-  { id: 'neutral', name: 'Neutro', color: '#34495e', icon: '👤' }
+  { id: "white_man", name: "Homem Branco", color: "#3498db", icon: "👨🏻" },
+  { id: "white_woman", name: "Mulher Branca", color: "#e74c3c", icon: "👩🏻" },
+  { id: "black_man", name: "Homem Negro", color: "#8e44ad", icon: "👨🏿" },
+  { id: "black_woman", name: "Mulher Negra", color: "#e67e22", icon: "👩🏿" },
+  { id: "lgbtiqa", name: "LGBTIQA+", color: "#f39c12", icon: "🏳️‍🌈" },
+  { id: "blind", name: "Pessoa Cega", color: "#16a085", icon: "🦯" },
+  { id: "deaf", name: "Pessoa Surda", color: "#2980b9", icon: "🤟" },
+  {
+    id: "disabled",
+    name: "Pessoa com Deficiência Física",
+    color: "#c0392b",
+    icon: "♿",
+  },
+  { id: "elderly", name: "Pessoa Idosa", color: "#7f8c8d", icon: "👴" },
+  { id: "neutral", name: "Neutro", color: "#34495e", icon: "👤" },
 ];
 
 class GameRoom {
@@ -60,30 +65,33 @@ class GameRoom {
     this.gameStarted = false;
     this.currentPlayerIndex = 0;
     this.usedNames = new Set(); // Alterado de usedIdentities para usedNames
-    this.gameLevel = 'basic'; // básico, intermediário, avançado
+    this.gameLevel = "basic"; // básico, intermediário, avançado
     this.cardDrawOrder = 0; // Rastrear qual tipo de carta desenhar a seguir
     this.eventRings = new Set([5, 10, 15, 20]); // Anéis com eventos
     this.events = {
       5: {
-        name: 'Guerra',
-        description: 'Escolha recuar 1 anel ou todos recuam 2 anéis',
-        type: 'war'
+        name: "Guerra",
+        description: "Escolha recuar 1 anel ou todos recuam 2 anéis",
+        type: "war",
       },
       10: {
-        name: 'Crise',
-        description: 'Jogador mais avançado escolhe recuar ou permitir que o jogador mais atrasado avance 1 anel',
-        type: 'crisis'
+        name: "Crise",
+        description:
+          "Jogador mais avançado escolhe recuar ou permitir que o jogador mais atrasado avance 1 anel",
+        type: "crisis",
       },
       15: {
-        name: 'Corrupção',
-        description: 'Escolha outro jogador para avançar mais 1 anel ou permanecer',
-        type: 'corruption'
+        name: "Corrupção",
+        description:
+          "Escolha outro jogador para avançar mais 1 anel ou permanecer",
+        type: "corruption",
       },
       20: {
-        name: 'Aquecimento Global',
-        description: 'Escolha permanecer e o jogador mais atrasado avança 1 anel, ou escolha avançar 1 anel',
-        type: 'global_warming'
-      }
+        name: "Aquecimento Global",
+        description:
+          "Escolha permanecer e o jogador mais atrasado avança 1 anel, ou escolha avançar 1 anel",
+        type: "global_warming",
+      },
     };
     this.currentCard = null; // Rastrear a carta atual
     this.playerDecisions = {}; // Rastrear decisões dos jogadores para a carta atual
@@ -111,12 +119,14 @@ class GameRoom {
   addPlayer(socketId, playerData) {
     // Verificar nomes duplicados em vez de identidades
     if (this.usedNames.has(playerData.name.toLowerCase())) {
-      return { success: false, error: 'Nome já utilizado' };
+      return { success: false, error: "Nome já utilizado" };
     }
 
-    const identityData = IDENTITY_CATEGORIES.find(cat => cat.id === playerData.identity);
+    const identityData = IDENTITY_CATEGORIES.find(
+      (cat) => cat.id === playerData.identity
+    );
     if (!identityData) {
-      return { success: false, error: 'Identidade inválida' };
+      return { success: false, error: "Identidade inválida" };
     }
 
     this.players.set(socketId, {
@@ -128,7 +138,7 @@ class GameRoom {
       icon: identityData.icon,
       pawnId: playerData.identity, // Adicionar pawnId para compatibilidade com cliente
       position: 21, // Começar no anel externo (21)
-      isConnected: true
+      isConnected: true,
     });
 
     // Armazenar o nome em vez da identidade
@@ -152,7 +162,7 @@ class GameRoom {
 
   getAvailablePawnIds() {
     // Retornar todos os IDs de peão já que podem ser reutilizados
-    return IDENTITY_CATEGORIES.map(identity => identity.id);
+    return IDENTITY_CATEGORIES.map((identity) => identity.id);
   }
 
   getPlayersArray() {
@@ -166,25 +176,32 @@ class GameRoom {
 
   nextPlayer() {
     const playersArray = this.getPlayersArray();
-    this.currentPlayerIndex = (this.currentPlayerIndex + 1) % playersArray.length;
+    this.currentPlayerIndex =
+      (this.currentPlayerIndex + 1) % playersArray.length;
   }
 
   getNextCardType() {
     switch (this.gameLevel) {
-      case 'basic':
-        return 'privilege-discrimination';
+      case "basic":
+        return "privilege-discrimination";
 
-      case 'intermediate':
+      case "intermediate":
         // Alterna entre privilege-discrimination e social-policies
-        return (this.cardDrawOrder % 2 === 0) ? 'privilege-discrimination' : 'social-policies';
+        return this.cardDrawOrder % 2 === 0
+          ? "privilege-discrimination"
+          : "social-policies";
 
-      case 'advanced':
+      case "advanced":
         // Rotaciona entre privilege-discrimination, social-policies e behaviors
-        const types = ['privilege-discrimination', 'social-policies', 'behaviors'];
+        const types = [
+          "privilege-discrimination",
+          "social-policies",
+          "behaviors",
+        ];
         return types[this.cardDrawOrder % 3];
 
       default:
-        return 'privilege-discrimination';
+        return "privilege-discrimination";
     }
   }
 
@@ -218,7 +235,7 @@ class GameRoom {
 
   // Obter apenas jogadores não-anfitriões (jogadores reais do jogo)
   getNonHostPlayers() {
-    return this.getPlayersArray().filter(p => p.id !== this.hostSocketId);
+    return this.getPlayersArray().filter((p) => p.id !== this.hostSocketId);
   }
 
   processEventDecision(eventType, playerId, decision, targetPlayerId = null) {
@@ -226,41 +243,41 @@ class GameRoom {
     const playersArray = this.getPlayersArray();
 
     switch (eventType) {
-      case 'war':
-        if (decision === 'self_retreat') {
+      case "war":
+        if (decision === "self_retreat") {
           this.movePlayer(playerId, 1); // Mover jogador de volta 1 anel
-        } else if (decision === 'all_retreat') {
+        } else if (decision === "all_retreat") {
           // Mover todos os jogadores de volta 2 anéis
-          playersArray.forEach(p => this.movePlayer(p.id, 2));
+          playersArray.forEach((p) => this.movePlayer(p.id, 2));
         }
         break;
 
-      case 'crisis':
+      case "crisis":
         const mostAdvanced = this.getMostAdvancedPlayer();
         const mostBackward = this.getMostBackwardPlayer();
 
         if (playerId === mostAdvanced.id) {
-          if (decision === 'self_retreat') {
+          if (decision === "self_retreat") {
             this.movePlayer(playerId, 1); // Mais avançado recua 1 anel
-          } else if (decision === 'help_backward') {
+          } else if (decision === "help_backward") {
             this.movePlayer(mostBackward.id, -1); // Mais atrasado avança 1 anel
           }
         }
         break;
 
-      case 'corruption':
-        if (decision === 'help_other' && targetPlayerId) {
+      case "corruption":
+        if (decision === "help_other" && targetPlayerId) {
           this.movePlayer(targetPlayerId, -1); // Jogador alvo avança 1 anel
         }
         // Se a decisão for 'remain', não fazer nada
         break;
 
-      case 'global_warming':
+      case "global_warming":
         const mostBackwardGW = this.getMostBackwardPlayer();
 
-        if (decision === 'remain_help_backward') {
+        if (decision === "remain_help_backward") {
           this.movePlayer(mostBackwardGW.id, -1); // Mais atrasado avança 1 anel
-        } else if (decision === 'self_advance') {
+        } else if (decision === "self_advance") {
           this.movePlayer(playerId, -1); // Jogador avança 1 anel
         }
         break;
@@ -287,37 +304,45 @@ class GameRoom {
     const mostBackward = this.getMostBackwardPlayer();
 
     switch (eventType) {
-      case 'war':
+      case "war":
         return [
-          { id: 'self_retreat', text: 'Eu recuo 1 anel' },
-          { id: 'all_retreat', text: 'Todos recuam 2 anéis' }
+          { id: "self_retreat", text: "Eu recuo 1 anel" },
+          { id: "all_retreat", text: "Todos recuam 2 anéis" },
         ];
 
-      case 'crisis':
+      case "crisis":
         if (playerId === mostAdvanced.id) {
           return [
-            { id: 'self_retreat', text: 'Eu recuo 1 anel' },
-            { id: 'help_backward', text: `Ajudar ${mostBackward.name} a avançar 1 anel` }
+            { id: "self_retreat", text: "Eu recuo 1 anel" },
+            {
+              id: "help_backward",
+              text: `Ajudar ${mostBackward.name} a avançar 1 anel`,
+            },
           ];
         }
         return null; // Apenas o jogador mais avançado pode escolher
 
-      case 'corruption':
-        const otherPlayers = this.getPlayersArray().filter(p => p.id !== playerId);
-        const choices = [{ id: 'remain', text: 'Permanecer na posição atual' }];
-        otherPlayers.forEach(p => {
+      case "corruption":
+        const otherPlayers = this.getPlayersArray().filter(
+          (p) => p.id !== playerId
+        );
+        const choices = [{ id: "remain", text: "Permanecer na posição atual" }];
+        otherPlayers.forEach((p) => {
           choices.push({
-            id: 'help_other',
+            id: "help_other",
             text: `Ajudar ${p.name} a avançar 1 anel`,
-            targetId: p.id
+            targetId: p.id,
           });
         });
         return choices;
 
-      case 'global_warming':
+      case "global_warming":
         return [
-          { id: 'remain_help_backward', text: `Permanecer e ajudar ${mostBackward.name} a avançar 1 anel` },
-          { id: 'self_advance', text: 'Eu avanço 1 anel' }
+          {
+            id: "remain_help_backward",
+            text: `Permanecer e ajudar ${mostBackward.name} a avançar 1 anel`,
+          },
+          { id: "self_advance", text: "Eu avanço 1 anel" },
         ];
 
       default:
@@ -325,48 +350,66 @@ class GameRoom {
     }
   }
 
+  // NEW METHOD: Get current game state for reconnecting players
+  getCurrentGameState() {
+    return {
+      gameStarted: this.gameStarted,
+      gameLevel: this.gameLevel,
+      currentPlayer: this.getCurrentPlayer(),
+      players: this.getPlayersArray(),
+      nextCardType: this.getNextCardType(),
+      currentCard: this.currentCard,
+      waitingForVotes: this.waitingForVotes,
+      playerDecisions: this.playerDecisions,
+      cardDrawOrder: this.cardDrawOrder,
+    };
+  }
 }
 
-
-io.on('connection', (socket) => {
-  console.log('Nova conexão:', socket.id);
+io.on("connection", (socket) => {
+  console.log("Nova conexão:", socket.id);
 
   // Anfitrião cria uma sala
-  socket.on('create-room', () => {
+  socket.on("create-room", () => {
     const room = new GameRoom(socket.id);
     gameRooms.set(room.id, room);
     gameRooms.set(socket.id, room.id); // Mapear socket para sala
 
     socket.join(room.id);
-    socket.emit('room-created', {
+    socket.emit("room-created", {
       roomCode: room.id,
       availableIdentities: room.getAvailableIdentities(),
-      availablePawns: room.getAvailablePawnIds()
+      availablePawns: room.getAvailablePawnIds(),
     });
 
     console.log(`Sala criada: ${room.id} pelo anfitrião: ${socket.id}`);
   });
 
   // Jogador entra na sala
-  socket.on('join-room', (data) => {
+  socket.on("join-room", (data) => {
     const { roomCode, playerName, playerIdentity, playerPawn } = data;
     const room = gameRooms.get(roomCode);
 
     if (!room) {
-      socket.emit('join-error', 'Sala não encontrada');
+      socket.emit("join-error", "Sala não encontrada");
       return;
     }
 
     // Usar playerPawn.id se playerPawn for um objeto, caso contrário usar playerIdentity
-    const identityId = playerPawn ? (playerPawn.id || playerPawn) : playerIdentity;
+    const identityId = playerPawn
+      ? playerPawn.id || playerPawn
+      : playerIdentity;
 
     // Check if this is a reconnection attempt
-    const existingPlayer = room.findPlayerByNameAndIdentity(playerName, identityId);
+    const existingPlayer = room.findPlayerByNameAndIdentity(
+      playerName,
+      identityId
+    );
 
     if (existingPlayer) {
       // This is a reconnection
       if (existingPlayer.isActive) {
-        socket.emit('join-error', 'Jogador já está conectado');
+        socket.emit("join-error", "Jogador já está conectado");
         return;
       }
 
@@ -384,35 +427,55 @@ io.on('connection', (socket) => {
 
       // Send appropriate response based on game state
       if (room.gameStarted) {
-        socket.emit('joined-room', {
+        socket.emit("joined-room", {
           roomCode: roomCode,
           playerData: playerData,
           gameLevel: room.gameLevel,
-          reconnected: true
+          reconnected: true,
         });
 
         // Send current game state
-        socket.emit('game-started', {
-          gameLevel: room.gameLevel,
-          currentPlayer: room.getCurrentPlayer(),
-          players: room.getPlayersArray(),
-          nextCardType: room.getNextCardType()
-        });
+        const gameState = room.getCurrentGameState();
+        socket.emit("game-started", gameState);
+
+        // CRITICAL FIX: If there's a current card and we're waiting for votes, send it to the reconnecting player
+        if (room.currentCard && room.waitingForVotes) {
+          socket.emit("card-drawn", {
+            card: room.currentCard,
+            cardDrawnBy: { id: room.hostSocketId, name: "Anfitrião" },
+            nextCardType: room.getNextCardType(),
+            cardType: room.currentCard.category,
+          });
+
+          // Also send any existing player decisions
+          for (const [playerId, decision] of Object.entries(
+            room.playerDecisions
+          )) {
+            socket.emit("player-decision", {
+              playerId: playerId,
+              decision: decision,
+            });
+          }
+
+          console.log(
+            `Reconnecting player ${playerName} received current card state`
+          );
+        }
       } else {
-        socket.emit('joined-room', {
+        socket.emit("joined-room", {
           roomCode: roomCode,
           playerData: playerData,
           gameLevel: room.gameLevel,
-          reconnected: true
+          reconnected: true,
         });
       }
 
       // Update all clients
-      io.to(roomCode).emit('room-updated', {
+      io.to(roomCode).emit("room-updated", {
         players: room.getPlayersArray(),
         availableIdentities: room.getAvailableIdentities(),
         availablePawns: room.getAvailablePawnIds(),
-        gameLevel: room.gameLevel
+        gameLevel: room.gameLevel,
       });
 
       console.log(`Jogador ${playerName} reconectado na sala ${roomCode}`);
@@ -421,18 +484,21 @@ io.on('connection', (socket) => {
 
     // New player trying to join
     if (room.gameStarted) {
-      socket.emit('join-error', 'Jogo já iniciado. Apenas jogadores existentes podem reconectar.');
+      socket.emit(
+        "join-error",
+        "Jogo já iniciado. Apenas jogadores existentes podem reconectar."
+      );
       return;
     }
 
     // Regular join logic for new players
     const result = room.addPlayer(socket.id, {
       name: playerName,
-      identity: identityId
+      identity: identityId,
     });
 
     if (!result.success) {
-      socket.emit('join-error', result.error);
+      socket.emit("join-error", result.error);
       return;
     }
 
@@ -440,35 +506,37 @@ io.on('connection', (socket) => {
     gameRooms.set(socket.id, roomCode);
 
     // Notificar jogador que entrou com sucesso
-    socket.emit('joined-room', {
+    socket.emit("joined-room", {
       roomCode: roomCode,
       playerData: room.players.get(socket.id),
-      gameLevel: room.gameLevel
+      gameLevel: room.gameLevel,
     });
 
     // Atualizar todos os clientes na sala
-    io.to(roomCode).emit('room-updated', {
+    io.to(roomCode).emit("room-updated", {
       players: room.getPlayersArray(),
       availableIdentities: room.getAvailableIdentities(),
       availablePawns: room.getAvailablePawnIds(),
-      gameLevel: room.gameLevel
+      gameLevel: room.gameLevel,
     });
 
-    console.log(`Jogador ${playerName} entrou na sala ${roomCode} como ${identityId}`);
+    console.log(
+      `Jogador ${playerName} entrou na sala ${roomCode} como ${identityId}`
+    );
   });
 
   // Anfitrião inicia o jogo
-  socket.on('start-game', (gameLevel = 'basic') => {
+  socket.on("start-game", (gameLevel = "basic") => {
     const roomId = gameRooms.get(socket.id);
     const room = gameRooms.get(roomId);
 
     if (!room || room.hostSocketId !== socket.id) {
-      socket.emit('error', 'Não autorizado a iniciar o jogo');
+      socket.emit("error", "Não autorizado a iniciar o jogo");
       return;
     }
 
     if (room.players.size < 2) {
-      socket.emit('error', 'Necessário pelo menos 2 jogadores para iniciar');
+      socket.emit("error", "Necessário pelo menos 2 jogadores para iniciar");
       return;
     }
 
@@ -477,48 +545,62 @@ io.on('connection', (socket) => {
     room.currentPlayerIndex = 0;
     room.cardDrawOrder = 0;
 
-    io.to(roomId).emit('game-started', {
+    io.to(roomId).emit("game-started", {
       gameLevel: gameLevel,
       currentPlayer: room.getCurrentPlayer(),
       players: room.getPlayersArray(),
-      nextCardType: room.getNextCardType()
+      nextCardType: room.getNextCardType(),
     });
 
-    console.log(`Jogo iniciado na sala ${roomId} com ${room.players.size} jogadores no nível ${gameLevel}`);
+    console.log(
+      `Jogo iniciado na sala ${roomId} com ${room.players.size} jogadores no nível ${gameLevel}`
+    );
   });
 
   // Evento de puxar carta: apenas o anfitrião pode puxar
-  socket.on('draw-card', (cardData) => {
+  socket.on("draw-card", (cardData) => {
     const roomId = gameRooms.get(socket.id);
     const room = gameRooms.get(roomId);
 
     if (!room || !room.gameStarted) {
-      socket.emit('error', 'Jogo não ativo');
+      socket.emit("error", "Jogo não ativo");
       return;
     }
 
     // Apenas o anfitrião pode puxar uma carta
     if (room.hostSocketId !== socket.id) {
-      socket.emit('error', 'Apenas o anfitrião pode puxar uma carta');
+      socket.emit("error", "Apenas o anfitrião pode puxar uma carta");
       return;
     }
 
     // Verificar se já estamos esperando votos
     if (room.waitingForVotes) {
-      socket.emit('error', 'Ainda aguardando votos dos jogadores na carta atual');
+      socket.emit(
+        "error",
+        "Ainda aguardando votos dos jogadores na carta atual"
+      );
       return;
     }
 
     // Verificar se o tipo de carta corresponde ao tipo esperado
     const expectedCardType = room.getNextCardType();
     if (cardData.category !== expectedCardType) {
-      socket.emit('error', `Esperado carta ${expectedCardType}, mas recebido ${cardData.category}`);
+      socket.emit(
+        "error",
+        `Esperado carta ${expectedCardType}, mas recebido ${cardData.category}`
+      );
       return;
     }
 
     // Validar formato da carta
-    if (!cardData.hasOwnProperty('forwardSteps') || !cardData.hasOwnProperty('backwardSteps')) {
-      socket.emit('error', 'Formato de carta inválido: faltando forwardSteps ou backwardSteps');
+    if (
+      !cardData.hasOwnProperty("forwardSteps") ||
+      !cardData.hasOwnProperty("backwardSteps")
+    ) {
+      socket.emit(
+        "error",
+        "Formato de carta inválido: faltando forwardSteps ou backwardSteps"
+      );
       return;
     }
 
@@ -528,23 +610,23 @@ io.on('connection', (socket) => {
     room.waitingForVotes = true;
 
     // Transmitir carta para todos os clientes (incluindo anfitrião)
-    io.to(roomId).emit('card-drawn', {
+    io.to(roomId).emit("card-drawn", {
       card: cardData,
-      cardDrawnBy: { id: room.hostSocketId, name: 'Anfitrião' },
+      cardDrawnBy: { id: room.hostSocketId, name: "Anfitrião" },
       nextCardType: room.getNextCardType(),
-      cardType: cardData.category
+      cardType: cardData.category,
     });
 
     console.log(`Carta puxada na sala ${roomId}: ${cardData.description}`);
   });
 
   // Adicionar este novo manipulador de evento socket em seu server.js
-  socket.on('event-decision', (data) => {
+  socket.on("event-decision", (data) => {
     const roomId = gameRooms.get(socket.id);
     const room = gameRooms.get(roomId);
 
     if (!room || !room.gameStarted) {
-      socket.emit('error', 'Jogo não ativo');
+      socket.emit("error", "Jogo não ativo");
       return;
     }
 
@@ -564,54 +646,54 @@ io.on('connection', (socket) => {
     room.playerDecisions = {};
 
     // Transmitir o resultado final
-    io.to(roomId).emit('all-decisions-made', {
+    io.to(roomId).emit("all-decisions-made", {
       allPlayers: room.getPlayersArray(),
       nextCardType: room.getNextCardType(),
       winner: winner,
       eventProcessed: true,
-      currentPlayer: room.getCurrentPlayer()
+      currentPlayer: room.getCurrentPlayer(),
     });
 
     if (winner) {
-      io.to(roomId).emit('game-ended', { winner: winner });
+      io.to(roomId).emit("game-ended", { winner: winner });
     } else {
       // Notificar anfitrião para puxar a próxima carta
-      io.to(room.hostSocketId).emit('ready-for-next-card', {
-        nextCardType: room.getNextCardType()
+      io.to(room.hostSocketId).emit("ready-for-next-card", {
+        nextCardType: room.getNextCardType(),
       });
     }
   });
 
   // Jogador submete seu voto (para frente/para trás)
-  socket.on('player-vote', (voteData) => {
+  socket.on("player-vote", (voteData) => {
     const roomId = gameRooms.get(socket.id);
     const room = gameRooms.get(roomId);
 
     if (!room || !room.gameStarted) {
-      socket.emit('error', 'Jogo não ativo');
+      socket.emit("error", "Jogo não ativo");
       return;
     }
 
     if (!room.currentCard || !room.waitingForVotes) {
-      socket.emit('error', 'Nenhuma carta puxada ou não aceitando votos');
+      socket.emit("error", "Nenhuma carta puxada ou não aceitando votos");
       return;
     }
 
     // Permitir apenas jogadores reais (não anfitrião) votarem
     if (socket.id === room.hostSocketId) {
-      socket.emit('error', 'Anfitrião não pode votar');
+      socket.emit("error", "Anfitrião não pode votar");
       return;
     }
 
     // Verificar se o jogador já votou
     if (room.playerDecisions[socket.id] !== undefined) {
-      socket.emit('error', 'Você já votou nesta carta');
+      socket.emit("error", "Você já votou nesta carta");
       return;
     }
 
     // Calcular passos de movimento baseado na direção do voto e valores da carta
     let steps;
-    if (voteData.direction === 'forward') {
+    if (voteData.direction === "forward") {
       // Movimento para frente: usar forwardSteps da carta (valor negativo para mover em direção ao centro)
       steps = -room.currentCard.forwardSteps;
     } else {
@@ -624,20 +706,29 @@ io.on('connection', (socket) => {
       direction: voteData.direction,
       description: voteData.description,
       steps: steps,
-      cardSteps: voteData.direction === 'forward' ? room.currentCard.forwardSteps : room.currentCard.backwardSteps
+      cardSteps:
+        voteData.direction === "forward"
+          ? room.currentCard.forwardSteps
+          : room.currentCard.backwardSteps,
     };
 
     // Notificar todos os clientes da decisão atualizada
-    io.to(roomId).emit('player-decision', {
+    io.to(roomId).emit("player-decision", {
       playerId: socket.id,
-      decision: room.playerDecisions[socket.id]
+      decision: room.playerDecisions[socket.id],
     });
 
     // Verificar se todos os jogadores não-anfitriões votaram
     const nonHostPlayers = room.getNonHostPlayers();
     const votesReceived = Object.keys(room.playerDecisions).length;
 
-    console.log(`Voto recebido de ${socket.id}: ${voteData.direction} (${voteData.direction === 'forward' ? room.currentCard.forwardSteps : room.currentCard.backwardSteps} passos). Votos: ${votesReceived}/${nonHostPlayers.length}`);
+    console.log(
+      `Voto recebido de ${socket.id}: ${voteData.direction} (${
+        voteData.direction === "forward"
+          ? room.currentCard.forwardSteps
+          : room.currentCard.backwardSteps
+      } passos). Votos: ${votesReceived}/${nonHostPlayers.length}`
+    );
 
     if (votesReceived === nonHostPlayers.length) {
       // Todos os jogadores votaram - processar movimentos
@@ -649,12 +740,16 @@ io.on('connection', (socket) => {
       for (const [playerId, decision] of Object.entries(room.playerDecisions)) {
         const oldPosition = room.players.get(playerId).position;
         const newPosition = room.movePlayer(playerId, decision.steps);
-        console.log(`Jogador ${playerId} moveu de ${oldPosition} para ${newPosition} (${decision.direction}: ${decision.cardSteps} passos)`);
+        console.log(
+          `Jogador ${playerId} moveu de ${oldPosition} para ${newPosition} (${decision.direction}: ${decision.cardSteps} passos)`
+        );
 
         // Verificar eventos APENAS para quem puxou a carta
-        if (room.gameLevel === 'advanced' &&
+        if (
+          room.gameLevel === "advanced" &&
           playerId === cardDrawer.id &&
-          room.isOnEventRing(newPosition)) {
+          room.isOnEventRing(newPosition)
+        ) {
           const event = room.getEventForRing(newPosition);
           if (event) {
             const choices = room.getEventChoices(event.type, playerId);
@@ -662,7 +757,7 @@ io.on('connection', (socket) => {
               cardDrawerEvents = {
                 player: room.players.get(playerId),
                 event: event,
-                choices: choices
+                choices: choices,
               };
             }
           }
@@ -670,7 +765,10 @@ io.on('connection', (socket) => {
       }
       // Se quem puxou a carta pousou em evento, aguardar sua decisão
       if (cardDrawerEvents) {
-        io.to(cardDrawerEvents.player.id).emit('event-choice-required', cardDrawerEvents);
+        io.to(cardDrawerEvents.player.id).emit(
+          "event-choice-required",
+          cardDrawerEvents
+        );
         // Não prosseguir para o próximo turno ainda
         return;
       }
@@ -684,26 +782,28 @@ io.on('connection', (socket) => {
       room.waitingForVotes = false;
 
       // Transmitir todos os movimentos concluídos - ESTA É A CORREÇÃO CHAVE
-      io.to(roomId).emit('all-decisions-made', {
+      io.to(roomId).emit("all-decisions-made", {
         allPlayers: room.getPlayersArray(),
         nextCardType: room.getNextCardType(),
         winner: winner,
         eventsTriggered: eventsTriggered,
-        currentPlayer: room.getCurrentPlayer()
+        currentPlayer: room.getCurrentPlayer(),
       });
 
       // TAMBÉM enviar atualizações individuais dos jogadores para garantir sincronização - NOVO
-      room.getPlayersArray().forEach(player => {
-        io.to(player.id).emit('player-position-updated', {
+      room.getPlayersArray().forEach((player) => {
+        io.to(player.id).emit("player-position-updated", {
           playerData: player,
-          allPlayers: room.getPlayersArray()
+          allPlayers: room.getPlayersArray(),
         });
       });
 
       // Se há um vencedor, terminar o jogo
       if (winner) {
-        io.to(roomId).emit('game-ended', { winner: winner });
-        console.log(`Jogo terminou na sala ${roomId}. Vencedor: ${winner.name}`);
+        io.to(roomId).emit("game-ended", { winner: winner });
+        console.log(
+          `Jogo terminou na sala ${roomId}. Vencedor: ${winner.name}`
+        );
       }
 
       // Resetar para próxima carta
@@ -712,23 +812,25 @@ io.on('connection', (socket) => {
       room.waitingForVotes = false;
 
       // Notificar anfitrião para puxar a próxima carta
-      io.to(room.hostSocketId).emit('ready-for-next-card', {
-        nextCardType: room.getNextCardType()
+      io.to(room.hostSocketId).emit("ready-for-next-card", {
+        nextCardType: room.getNextCardType(),
       });
 
-      console.log(`Todos os votos processados na sala ${roomId}. Pronto para próxima carta.`);
+      console.log(
+        `Todos os votos processados na sala ${roomId}. Pronto para próxima carta.`
+      );
     }
   });
 
   // Lidar com desconexão
-  socket.on('disconnect', () => {
+  socket.on("disconnect", () => {
     const roomId = gameRooms.get(socket.id);
     if (roomId) {
       const room = gameRooms.get(roomId);
       if (room) {
         if (room.hostSocketId === socket.id) {
           // Anfitrião desconectou, terminar jogo
-          io.to(roomId).emit('host-disconnected');
+          io.to(roomId).emit("host-disconnected");
           gameRooms.delete(roomId);
           console.log(`Anfitrião desconectou, sala ${roomId} fechada`);
         } else {
@@ -742,17 +844,19 @@ io.on('connection', (socket) => {
               room.disconnectedPlayers.set(player.originalId, player);
               room.players.delete(socket.id);
 
-              console.log(`Jogador ${player.name} desconectou da sala ${roomId} (pode reconectar)`);
+              console.log(
+                `Jogador ${player.name} desconectou da sala ${roomId} (pode reconectar)`
+              );
             } else {
               // Game hasn't started, remove completely
               room.removePlayer(socket.id);
               console.log(`Jogador ${socket.id} desconectou da sala ${roomId}`);
             }
 
-            io.to(roomId).emit('room-updated', {
+            io.to(roomId).emit("room-updated", {
               players: room.getPlayersArray(),
               availableIdentities: room.getAvailableIdentities(),
-              availablePawns: room.getAvailablePawnIds()
+              availablePawns: room.getAvailablePawnIds(),
             });
           }
         }
@@ -762,12 +866,12 @@ io.on('connection', (socket) => {
   });
 
   // Obter identidades disponíveis para uma sala
-  socket.on('get-available-identities', (roomCode) => {
+  socket.on("get-available-identities", (roomCode) => {
     const room = gameRooms.get(roomCode);
     if (room) {
-      socket.emit('available-identities', {
+      socket.emit("available-identities", {
         identities: room.getAvailableIdentities(),
-        pawnIds: room.getAvailablePawnIds()
+        pawnIds: room.getAvailablePawnIds(),
       });
     }
   });
