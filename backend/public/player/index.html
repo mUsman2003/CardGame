@@ -7,6 +7,7 @@
     <title>Jogo Espiral Social - Jogador</title>
     <link rel="stylesheet" href="styles.css">
     <script src="/socket.io/socket.io.js"></script>
+    <script src="https://rawgit.com/schmich/instascan-builds/master/instascan.min.js"></script>
 </head>
 
 <body>
@@ -37,7 +38,12 @@
                         <!-- Peões serão preenchidos pelo JavaScript -->
                     </div>
                 </div>
-
+                <!-- Add this in your player.html -->
+                <!-- <button id="qrScannerBtn" class="btn">Scan QR Code</button>
+                <div id="qrScannerContainer" style="display: none;">
+                <video id="qrScanner" style="width: 100%; max-width: 400px;"></video>
+                <button onclick="stopScanner()" class="btn">Cancel</button> -->
+                </div>
                 <button id="joinBtn" class="button" disabled>Entrar no Jogo</button>
             </div>
 
