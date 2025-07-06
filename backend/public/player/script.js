@@ -275,12 +275,17 @@ socket.on("game-started", (data) => {
 });
 
 socket.on("card-drawn", (data) => {
+  console.log("Card drawn event received:", data); // Debug log
+
   gameState.cardDrawn = true;
   gameState.hasVoted = false;
   gameState.myVote = null;
 
   // Store card data for button text updates
   const card = data.card;
+
+  console.log("Card data:", card); // Debug log
+  console.log("Forward steps:", card.forwardSteps, "Backward steps:", card.backwardSteps); // Debug log
 
   // Reset button states
   moveForwardBtn.disabled = false;
@@ -289,18 +294,21 @@ socket.on("card-drawn", (data) => {
   // Update button text based on card steps
   if (card.forwardSteps === 0) {
     moveForwardBtn.innerHTML = "⏸️ Permanecer";
+    console.log("Forward button set to Permanecer"); // Debug log
   } else {
     moveForwardBtn.innerHTML = "⬆️ Avançar";
+    console.log("Forward button set to Avançar"); // Debug log
   }
 
   if (card.backwardSteps === 0) {
     moveBackwardBtn.innerHTML = "⏸️ Permanecer";
+    console.log("Backward button set to Permanecer"); // Debug log
   } else {
     moveBackwardBtn.innerHTML = "⬇️ Recuar";
+    console.log("Backward button set to Recuar"); // Debug log
   }
 
-  // NÃO mostrar descrição da carta ao jogador
-  // Apenas mostrar opções de votação
+  // Show voting options
   updateGameDisplay();
 });
 
@@ -430,14 +438,12 @@ function updateOtherPlayersDisplay() {
       const playerElement = document.createElement("div");
       playerElement.className = "other-player";
       playerElement.innerHTML = `
-                        <div class="other-player-pawn">${
-                          pawn ? pawn.icon : "👤"
-                        }</div>
+                        <div class="other-player-pawn">${pawn ? pawn.icon : "👤"
+        }</div>
                         <div class="player-details">
                             <div class="player-name">${player.name}</div>
-                            <div class="player-position">Anel: ${
-                              player.position
-                            }</div>
+                            <div class="player-position">Anel: ${player.position
+        }</div>
                         </div>
                     `;
       otherPlayersList.appendChild(playerElement);
@@ -455,14 +461,12 @@ function updateOtherPlayersDisplay() {
       const playerElement = document.createElement("div");
       playerElement.className = "other-player";
       playerElement.innerHTML = `
-                        <div class="other-player-pawn">${
-                          pawn ? pawn.icon : "👤"
-                        }</div>
+                        <div class="other-player-pawn">${pawn ? pawn.icon : "👤"
+        }</div>
                         <div class="player-details">
                             <div class="player-name">${player.name}</div>
-                            <div class="player-position">Anel: ${
-                              player.position
-                            }</div>
+                            <div class="player-position">Anel: ${player.position
+        }</div>
                         </div>
                     `;
       gameOtherPlayersList.appendChild(playerElement);
@@ -506,7 +510,7 @@ function showWinner(winner) {
   const isWinner = winner.id === gameState.playerData?.id;
 
   if (isWinner) {
-    winnerText.innerHTML = `🎉 Você chegou ao centro primeiro! 🎉<br>Sua jornada através da espiral está completa.`;
+    winnerText.innerHTML = `🎉 Foste o primeiro a chegar ao último anel! 🎉`;
   } else {
     winnerText.innerHTML = `${winner.name} chegou ao centro primeiro.<br>A jornada de cada um conta uma história diferente.`;
   }
