@@ -161,11 +161,9 @@ body {
 
 .button.move-backward {
     background: linear-gradient(45deg, #e74c3c, #c0392b);
+    margin-bottom: 0.5rem;
 }
 
-.button.move-DontBtn {
-    background: linear-gradient(45deg, #adadad, #c5c5c5);
-}
 
 .movement-buttons {
     display: flex;
