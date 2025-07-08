@@ -86,6 +86,9 @@ socket.on("game-started", (data) => {
 
   document.getElementById("gameLevel").disabled = true;
 
+  // Recreate the spiral board to include event icons if advanced level
+  createSpiralBoard();
+
   updateCurrentPlayer(data.currentPlayer);
   updatePlayerPositions();
   updatePhaseDisplay();
@@ -267,45 +270,198 @@ function generateQRCode(roomCode) {
     }
   );
 }
+
+function addEventIconToRing(ringNumber, eventData) {
+  const ring = document.getElementById(`ring-${ringNumber}`);
+  const spiralBoard = document.getElementById('spiralBoard');
+  if (!ring || !spiralBoard) return;
+
+  // Get ring position and size
+  const ringCenterX = parseFloat(ring.style.left) + parseFloat(ring.style.width) / 2;
+  const ringCenterY = parseFloat(ring.style.top) + parseFloat(ring.style.width) / 2;
+  const ringRadius = parseFloat(ring.style.width) / 2;
+  
+  const iconEmoji = getEventIcon(eventData.type);
+  
+  // Hard-coded positions for all possible icon locations
+  const allIconPositions = [
+    // Primary positions (top, bottom, left, right)
+    { 
+      x: ringCenterX - 10.5, 
+      y: ringCenterY - ringRadius - 14.5, // Top
+      name: 'top'
+    },
+    { 
+      x: ringCenterX - 10.5, 
+      y: ringCenterY + ringRadius - 6.5, // Bottom
+      name: 'bottom'
+    },
+    { 
+      x: ringCenterX - ringRadius - 8.5, 
+      y: ringCenterY - 10.5, // Left
+      name: 'left'
+    },
+    { 
+      x: ringCenterX + ringRadius - 16.5, 
+      y: ringCenterY - 10.5, // Right
+      name: 'right'
+    },
+    
+    // Secondary positions (diagonals)
+    { 
+      x: ringCenterX - ringRadius * 0.707 - 18.5, 
+      y: ringCenterY - ringRadius * 0.707 - 12.5, // Top-left diagonal
+      name: 'top-left'
+    },
+    { 
+      x: ringCenterX + ringRadius * 0.707 - 8.5, 
+      y: ringCenterY - ringRadius * 0.707 - 12.5, // Top-right diagonal
+      name: 'top-right'
+    },
+    { 
+      x: ringCenterX - ringRadius * 0.707 - 18.5, 
+      y: ringCenterY + ringRadius * 0.707 - 8.5, // Bottom-left diagonal
+      name: 'bottom-left'
+    },
+    { 
+      x: ringCenterX + ringRadius * 0.707 - 8.5, 
+      y: ringCenterY + ringRadius * 0.707 - 8.5, // Bottom-right diagonal
+      name: 'bottom-right'
+    },
+    
+    // Tertiary positions (between primary and secondary)
+    { 
+      x: ringCenterX - ringRadius * 0.383 - 14.5, 
+      y: ringCenterY - ringRadius * 0.924 - 13.5, // Top-left intermediate
+      name: 'top-left-mid'
+    },
+    { 
+      x: ringCenterX + ringRadius * 0.383 - 6.5, 
+      y: ringCenterY - ringRadius * 0.924 - 13.5, // Top-right intermediate
+      name: 'top-right-mid'
+    },
+    { 
+      x: ringCenterX - ringRadius * 0.924 - 16.5, 
+      y: ringCenterY - ringRadius * 0.383 - 11.5, // Left-top intermediate
+      name: 'left-top-mid'
+    },
+    { 
+      x: ringCenterX + ringRadius * 0.924 - 4.5, 
+      y: ringCenterY - ringRadius * 0.383 - 11.5, // Right-top intermediate
+      name: 'right-top-mid'
+    },
+    
+    { 
+      x: ringCenterX - ringRadius * 0.924 - 16.5, 
+      y: ringCenterY + ringRadius * 0.383 - 9.5, // Left-bottom intermediate
+      name: 'left-bottom-mid'
+    },
+    { 
+      x: ringCenterX + ringRadius * 0.924 - 4.5, 
+      y: ringCenterY + ringRadius * 0.383 - 9.5, // Right-bottom intermediate
+      name: 'right-bottom-mid'
+    },
+    { 
+      x: ringCenterX - ringRadius * 0.383 - 14.5, 
+      y: ringCenterY + ringRadius * 0.924 - 7.5, // Bottom-left intermediate
+      name: 'bottom-left-mid'
+    },
+    { 
+      x: ringCenterX + ringRadius * 0.383 - 6.5, 
+      y: ringCenterY + ringRadius * 0.924 - 7.5, // Bottom-right intermediate
+      name: 'bottom-right-mid'
+    }
+  ];
+
+  // Use the first available position (or multiple positions if needed)
+  const numIcons = 1; // Change this based on how many icons you want to show
+  const selectedPositions = allIconPositions.slice(0, numIcons);
+
+  selectedPositions.forEach((pos, index) => {
+    const eventIcon = document.createElement('div');
+    eventIcon.className = `event-icon event-icon-${index}`;
+    eventIcon.innerHTML = iconEmoji;
+    eventIcon.title = `${eventData.name} - Ring ${ringNumber} (${pos.name})`;
+    
+    // Style the event icon with fixed position relative to spiral board
+    eventIcon.style.cssText = `
+      position: absolute;
+      left: ${pos.x}px;
+      top: ${pos.y}px;
+      width: 21px;
+      height: 21px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      z-index: 15;
+      cursor: help;
+    `;
+
+    // Add to spiral board
+    spiralBoard.appendChild(eventIcon);
+  });
+}
+function getEventIcon(eventType) {
+  const eventIcons = {
+    'war': '⚔️',
+    'global_warming': '🌡️',
+    'corruption': '💰',
+    'crisis': '📉',
+    'fascism': '👊'
+  };
+  return eventIcons[eventType] || '❓';
+}
+
+// Updated event data object
+const eventData = {
+  2: {
+    name: 'Guerra',
+    description: 'Escolhe recuar 1 casa ou todos recuarem 2 casas',
+    type: 'war'
+  },
+  6: {
+    name: 'Aquecimento Global',
+    description: 'Escolhe permanecer e o jogador mais recuado avançar 1 casa ou escolhe avançar 1 casa',
+    type: 'global_warming'
+  },
+  10: {
+    name: 'Corrupção',
+    description: 'Escolhe outro jogador para avançarem mais 1 casa ou permanecerem',
+    type: 'corruption'
+  },
+  14: {
+    name: 'Crise',
+    description: 'O jogador mais avançado escolhe recuar ou permitir que o mais recuado avance 1 casa',
+    type: 'crisis'
+  },
+  18: {
+    name: 'Fascismo',
+    description: 'Escolhe avançar 1 casa e os outros recuarem 1 casa ou permanecer',
+    type: 'fascism'
+  }
+};
+
 function createSpiralBoard() {
   const board = document.getElementById("spiralBoard");
   board.innerHTML = "";
 
   const boardSize = 600;
   const center = boardSize / 2;
-  const eventRings = [5, 10, 15, 20];
+  const eventRings = [5, 10, 15, 20]; // Original event rings for coloring
+  const newEventRings = [2, 6, 10, 14, 18]; // New event positions
 
   // Definir cores dos anéis do exterior (21) ao interior (1) baseado na sua imagem
   const ringColors = [
-    "#1f4e79",
-    "#ffffff",
-    "#4472a8",
-    "#ffffff",
-    "#7ba3d1",
-    "#ffffff",
-    "#b8d1ed",
-    "#ffffff",
-    "#8e44ad",
-    "#ffffff",
-    "#af7ac5",
-    "#ffffff",
-    "#e8b4cb",
-    "#ffffff",
-    "#f06292",
-    "#ffffff",
-    "#ff9800",
-    "#ffffff",
-    "#ffcc80",
-    "#ffffff",
-    "#4caf50", // Anel central
+    "#1f4e79", "#ffffff", "#4472a8", "#ffffff", "#7ba3d1", "#ffffff", "#b8d1ed", "#ffffff",
+    "#8e44ad", "#ffffff", "#af7ac5", "#ffffff", "#e8b4cb", "#ffffff", "#f06292", "#ffffff",
+    "#ff9800", "#ffffff", "#ffcc80", "#ffffff", "#4caf50" // Anel central
   ];
 
   // Criar anéis do exterior (21) ao interior (1)
   for (let ring = 21; ring >= 1; ring--) {
     const ringElement = document.createElement("div");
-    ringElement.className = `ring ${
-      eventRings.includes(ring) ? "event-ring" : ""
-    }`;
+    ringElement.className = `ring ${eventRings.includes(ring) ? "event-ring" : ""}`;
     ringElement.id = `ring-${ring}`;
 
     const radius = (ring / 21) * (boardSize / 2 - 20);
@@ -317,14 +473,18 @@ function createSpiralBoard() {
     ringElement.style.top = `${center - radius}px`;
 
     // Aplicar cor do array
-    const colorIndex = 21 - ring; // Converter número do anel para índice do array
+    const colorIndex = 21 - ring;
     ringElement.style.backgroundColor = ringColors[colorIndex];
     ringElement.style.borderColor = ringColors[colorIndex];
 
     board.appendChild(ringElement);
+
+    // Add event icons if level is advanced and this ring has an event
+    if (gameState.gameLevel === 'advanced' && eventData[ring]) {
+      addEventIconToRing(ring, eventData[ring]);
+    }
   }
 }
-
 function updatePlayerPositions() {
   // Remove existing pawns
   document.querySelectorAll(".pawn").forEach((pawn) => pawn.remove());
