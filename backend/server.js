@@ -45,7 +45,7 @@ const IDENTITY_CATEGORIES = [
   { id: "black_woman", name: "Mulher Negra", color: "#e67e22", icon: "👩🏿" },
   { id: "lgbtiqa", name: "LGBTIQA+", color: "#f39c12", icon: "🏳️‍🌈" },
   { id: "blind", name: "Pessoa Cega", color: "#16a085", icon: "🦯" },
-  { id: "deaf", name: "Pessoa Surda", color: "#2980b9", icon: "🤟" },
+  { id: "deaf", name: "Pessoa Surda", color: "#2980b9", icon: "👂" },
   {
     id: "disabled",
     name: "Pessoa com Deficiência Física",
@@ -70,30 +70,34 @@ class GameRoom {
     this.eventRings = new Set([2, 6, 10, 14, 18]); // Updated ring positions
     this.events = {
       2: {
-        name: 'Guerra',
-        description: 'Escolhe recuar 1 casa ou todos recuarem 2 casas',
-        type: 'war'
+        name: "Guerra",
+        description: "Escolhe recuar 1 casa ou todos recuarem 2 casas",
+        type: "war",
       },
       6: {
-        name: 'Aquecimento Global',
-        description: 'Escolhe permanecer e o jogador mais recuado avançar 1 casa ou escolhe avançar 1 casa',
-        type: 'global_warming'
+        name: "Aquecimento Global",
+        description:
+          "Escolhe permanecer e o jogador mais recuado avançar 1 casa ou escolhe avançar 1 casa",
+        type: "global_warming",
       },
       10: {
-        name: 'Corrupção',
-        description: 'Escolhe outro jogador para avançarem mais 1 casa ou permanecerem',
-        type: 'corruption'
+        name: "Corrupção",
+        description:
+          "Escolhe outro jogador para avançarem mais 1 casa ou permanecerem",
+        type: "corruption",
       },
       14: {
-        name: 'Crise',
-        description: 'O jogador mais avançado escolhe recuar ou permitir que o mais recuado avance 1 casa',
-        type: 'crisis'
+        name: "Crise",
+        description:
+          "O jogador mais avançado escolhe recuar ou permitir que o mais recuado avance 1 casa",
+        type: "crisis",
       },
       18: {
-        name: 'Fascismo',
-        description: 'Escolhe avançar 1 casa e os outros recuarem 1 casa ou permanecer',
-        type: 'fascism'
-      }
+        name: "Fascismo",
+        description:
+          "Escolhe avançar 1 casa e os outros recuarem 1 casa ou permanecer",
+        type: "fascism",
+      },
     };
     this.currentCard = null; // Rastrear a carta atual
     this.playerDecisions = {}; // Rastrear decisões dos jogadores para a carta atual
@@ -245,51 +249,51 @@ class GameRoom {
     const playersArray = this.getPlayersArray();
 
     switch (eventType) {
-      case 'war':
-        if (decision === 'self_retreat') {
+      case "war":
+        if (decision === "self_retreat") {
           this.movePlayer(playerId, 1); // Mover jogador de volta 1 casa
-        } else if (decision === 'all_retreat') {
+        } else if (decision === "all_retreat") {
           // Mover todos os jogadores de volta 2 casas
-          playersArray.forEach(p => this.movePlayer(p.id, 2));
+          playersArray.forEach((p) => this.movePlayer(p.id, 2));
         }
         break;
 
-      case 'global_warming':
+      case "global_warming":
         const mostBackwardGW = this.getMostBackwardPlayer();
 
-        if (decision === 'remain_help_backward') {
+        if (decision === "remain_help_backward") {
           this.movePlayer(mostBackwardGW.id, -1); // Mais recuado avança 1 casa
-        } else if (decision === 'self_advance') {
+        } else if (decision === "self_advance") {
           this.movePlayer(playerId, -1); // Jogador avança 1 casa
         }
         break;
 
-      case 'corruption':
-        if (decision === 'help_other' && targetPlayerId) {
+      case "corruption":
+        if (decision === "help_other" && targetPlayerId) {
           this.movePlayer(targetPlayerId, -1); // Jogador alvo avança 1 casa
         }
         // Se a decisão for 'remain', não fazer nada
         break;
 
-      case 'crisis':
+      case "crisis":
         const mostAdvanced = this.getMostAdvancedPlayer();
         const mostBackward = this.getMostBackwardPlayer();
 
         if (playerId === mostAdvanced.id) {
-          if (decision === 'self_retreat') {
+          if (decision === "self_retreat") {
             this.movePlayer(playerId, 1); // Mais avançado recua 1 casa
-          } else if (decision === 'help_backward') {
+          } else if (decision === "help_backward") {
             this.movePlayer(mostBackward.id, -1); // Mais recuado avança 1 casa
           }
         }
         break;
 
-      case 'fascism':
-        if (decision === 'advance_others_retreat') {
+      case "fascism":
+        if (decision === "advance_others_retreat") {
           // Jogador avança 1 casa
           this.movePlayer(playerId, -1);
           // Outros jogadores recuam 1 casa
-          playersArray.forEach(p => {
+          playersArray.forEach((p) => {
             if (p.id !== playerId) {
               this.movePlayer(p.id, 1);
             }
@@ -320,43 +324,54 @@ class GameRoom {
     const mostBackward = this.getMostBackwardPlayer();
 
     switch (eventType) {
-      case 'war':
+      case "war":
         return [
-          { id: 'self_retreat', text: 'Eu recuo 1 casa' },
-          { id: 'all_retreat', text: 'Todos recuam 2 casas' }
+          { id: "self_retreat", text: "Eu recuo 1 casa" },
+          { id: "all_retreat", text: "Todos recuam 2 casas" },
         ];
 
-      case 'global_warming':
+      case "global_warming":
         return [
-          { id: 'remain_help_backward', text: `Permanecer e ajudar ${mostBackward.name} a avançar 1 casa` },
-          { id: 'self_advance', text: 'Eu avanço 1 casa' }
+          {
+            id: "remain_help_backward",
+            text: `Permanecer e ajudar ${mostBackward.name} a avançar 1 casa`,
+          },
+          { id: "self_advance", text: "Eu avanço 1 casa" },
         ];
 
-      case 'corruption':
-        const otherPlayers = this.getPlayersArray().filter(p => p.id !== playerId);
-        const choices = [{ id: 'remain', text: 'Permanecer na posição atual' }];
-        otherPlayers.forEach(p => {
+      case "corruption":
+        const otherPlayers = this.getPlayersArray().filter(
+          (p) => p.id !== playerId
+        );
+        const choices = [{ id: "remain", text: "Permanecer na posição atual" }];
+        otherPlayers.forEach((p) => {
           choices.push({
-            id: 'help_other',
+            id: "help_other",
             text: `Ajudar ${p.name} a avançar 1 casa`,
-            targetId: p.id
+            targetId: p.id,
           });
         });
         return choices;
 
-      case 'crisis':
+      case "crisis":
         if (playerId === mostAdvanced.id) {
           return [
-            { id: 'self_retreat', text: 'Eu recuo 1 casa' },
-            { id: 'help_backward', text: `Ajudar ${mostBackward.name} a avançar 1 casa` }
+            { id: "self_retreat", text: "Eu recuo 1 casa" },
+            {
+              id: "help_backward",
+              text: `Ajudar ${mostBackward.name} a avançar 1 casa`,
+            },
           ];
         }
         return null; // Apenas o jogador mais avançado pode escolher
 
-      case 'fascism':
+      case "fascism":
         return [
-          { id: 'remain', text: 'Permanecer na posição atual' },
-          { id: 'advance_others_retreat', text: 'Eu avanço 1 casa e os outros recuam 1 casa' }
+          { id: "remain", text: "Permanecer na posição atual" },
+          {
+            id: "advance_others_retreat",
+            text: "Eu avanço 1 casa e os outros recuam 1 casa",
+          },
         ];
 
       default:
@@ -572,37 +587,49 @@ io.on("connection", (socket) => {
   });
 
   // Evento de puxar carta: apenas o anfitrião pode puxar
-  socket.on('draw-card', (cardData) => {
+  socket.on("draw-card", (cardData) => {
     const roomId = gameRooms.get(socket.id);
     const room = gameRooms.get(roomId);
 
     if (!room || !room.gameStarted) {
-      socket.emit('error', 'Jogo não ativo');
+      socket.emit("error", "Jogo não ativo");
       return;
     }
 
     // Apenas o anfitrião pode puxar uma carta
     if (room.hostSocketId !== socket.id) {
-      socket.emit('error', 'Apenas o anfitrião pode puxar uma carta');
+      socket.emit("error", "Apenas o anfitrião pode puxar uma carta");
       return;
     }
 
     // Verificar se já estamos esperando votos
     if (room.waitingForVotes) {
-      socket.emit('error', 'Ainda aguardando votos dos jogadores na carta atual');
+      socket.emit(
+        "error",
+        "Ainda aguardando votos dos jogadores na carta atual"
+      );
       return;
     }
 
     // Verificar se o tipo de carta corresponde ao tipo esperado
     const expectedCardType = room.getNextCardType();
     if (cardData.category !== expectedCardType) {
-      socket.emit('error', `Esperado carta ${expectedCardType}, mas recebido ${cardData.category}`);
+      socket.emit(
+        "error",
+        `Esperado carta ${expectedCardType}, mas recebido ${cardData.category}`
+      );
       return;
     }
 
     // Validar formato da carta
-    if (!cardData.hasOwnProperty('forwardSteps') || !cardData.hasOwnProperty('backwardSteps')) {
-      socket.emit('error', 'Formato de carta inválido: faltando forwardSteps ou backwardSteps');
+    if (
+      !cardData.hasOwnProperty("forwardSteps") ||
+      !cardData.hasOwnProperty("backwardSteps")
+    ) {
+      socket.emit(
+        "error",
+        "Formato de carta inválido: faltando forwardSteps ou backwardSteps"
+      );
       return;
     }
 
@@ -613,14 +640,14 @@ io.on("connection", (socket) => {
 
     // IMPORTANT: Transmitir carta para TODOS os jogadores na sala (incluindo anfitrião)
     // Use io.to(roomId).emit para garantir que todos recebam
-    io.to(roomId).emit('card-drawn', {
+    io.to(roomId).emit("card-drawn", {
       card: cardData,
-      cardDrawnBy: { id: room.hostSocketId, name: 'Anfitrião' },
+      cardDrawnBy: { id: room.hostSocketId, name: "Anfitrião" },
       nextCardType: room.getNextCardType(),
       cardType: cardData.category,
       // Add these fields to help with debugging
       forwardSteps: cardData.forwardSteps,
-      backwardSteps: cardData.backwardSteps
+      backwardSteps: cardData.backwardSteps,
     });
 
     console.log(`Carta puxada na sala ${roomId}: ${cardData.description}`);
@@ -730,9 +757,10 @@ io.on("connection", (socket) => {
     const votesReceived = Object.keys(room.playerDecisions).length;
 
     console.log(
-      `Voto recebido de ${socket.id}: ${voteData.direction} (${voteData.direction === "forward"
-        ? room.currentCard.forwardSteps
-        : room.currentCard.backwardSteps
+      `Voto recebido de ${socket.id}: ${voteData.direction} (${
+        voteData.direction === "forward"
+          ? room.currentCard.forwardSteps
+          : room.currentCard.backwardSteps
       } passos). Votos: ${votesReceived}/${nonHostPlayers.length}`
     );
 

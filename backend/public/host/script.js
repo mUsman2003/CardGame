@@ -242,7 +242,6 @@ function generateQRCode(roomCode) {
 
   const joinUrl = `https://cardgame-yh73.onrender.com/player/?room=${roomCode}`;
 
-
   // Clear previous QR code
   qrCodeDiv.innerHTML = "";
 
@@ -274,42 +273,42 @@ function generateQRCode(roomCode) {
 const hardcodedPositions = {
   18: [
     // Top
-    { x: 290, y: 45+13 }, 
+    { x: 290, y: 45 + 13 },
     // Bottom
-    { x: 290, y: 535-13 }, 
+    { x: 290, y: 535 - 13 },
     // Left
-    { x: 45+13, y: 290 }, 
+    { x: 45 + 13, y: 290 },
     // Right
-    { x: 535-13, y: 290 }
+    { x: 535 - 13, y: 290 },
   ],
   14: [
-    { x: 290, y: 97+13 }, 
-    { x: 290, y: 483-13 }, 
-    { x: 97+13 , y: 290 }, 
-    { x: 483-13, y: 290 }
+    { x: 290, y: 97 + 13 },
+    { x: 290, y: 483 - 13 },
+    { x: 97 + 13, y: 290 },
+    { x: 483 - 13, y: 290 },
   ],
   10: [
-    { x: 290, y: 150+13 },
-    { x: 290, y: 430-13 }, 
-    { x: 150+13, y: 290 }, 
-    { x: 430-13, y: 290 } 
+    { x: 290, y: 150 + 13 },
+    { x: 290, y: 430 - 13 },
+    { x: 150 + 13, y: 290 },
+    { x: 430 - 13, y: 290 },
   ],
   6: [
-    { x: 290, y: 203+13 }, 
-    { x: 290, y: 377-13 }, 
-    { x: 203+13, y: 290 }, 
-    { x: 377-13, y: 290 } 
+    { x: 290, y: 203 + 13 },
+    { x: 290, y: 377 - 13 },
+    { x: 203 + 13, y: 290 },
+    { x: 377 - 13, y: 290 },
   ],
   2: [
-    { x: 290, y: 258+13 }, 
-    { x: 290, y: 322-13 }, 
-    { x: 256+13, y: 290 }, 
-    { x: 324-13, y: 290 }
-  ]
+    { x: 290, y: 258 + 13 },
+    { x: 290, y: 322 - 13 },
+    { x: 256 + 13, y: 290 },
+    { x: 324 - 13, y: 290 },
+  ],
 };
 
 function addEventIconToRing(ringNumber, eventData) {
-  const spiralBoard = document.getElementById('spiralBoard');
+  const spiralBoard = document.getElementById("spiralBoard");
   if (!spiralBoard) return;
 
   const iconEmoji = getEventIcon(eventData.type);
@@ -317,7 +316,7 @@ function addEventIconToRing(ringNumber, eventData) {
   if (!positions) return;
 
   positions.forEach((pos, index) => {
-    const eventIcon = document.createElement('div');
+    const eventIcon = document.createElement("div");
     eventIcon.className = `event-icon event-icon-${index}`;
     eventIcon.innerHTML = iconEmoji;
     eventIcon.title = `${eventData.name} - Ring ${ringNumber}`;
@@ -340,45 +339,62 @@ function addEventIconToRing(ringNumber, eventData) {
   });
 }
 
+// function getEventIcon(eventType) {
+//   const eventIcons = {
+//     'war': '⚔️',
+//     'global_warming': '🌡️',
+//     'corruption': '💰',
+//     'crisis': '📉',
+//     'fascism': '👊'
+//   };
+//   return eventIcons[eventType] || '';
+// }
 
 function getEventIcon(eventType) {
   const eventIcons = {
-    'war': '⚔️',
-    'global_warming': '🌡️',
-    'corruption': '💰',
-    'crisis': '📉',
-    'fascism': '👊'
+    war: `<img src="EventIcons/war.png" alt="War" class="event-icon-img">`,
+    global_warming: `<img src="EventIcons/global_warming.png" alt="Global Warming" class="event-icon-img">`,
+    corruption: `<img src="EventIcons/corruption.png" alt="Corruption" class="event-icon-img">`,
+    crisis: `<img src="EventIcons/crisis.png" alt="Crisis" class="event-icon-img">`,
+    fascism: `<img src="EventIcons/fascism.png" alt="Fascism" class="event-icon-img">`,
   };
-  return eventIcons[eventType] || '';
+  return (
+    eventIcons[eventType] ||
+    `<img src="icons/default.png" alt="Event" class="event-icon-img">`
+  );
 }
 
 // Updated event data object
 const eventData = {
   2: {
-    name: 'Guerra',
-    description: 'Escolhe recuar 1 casa ou todos recuarem 2 casas',
-    type: 'war'
+    name: "Guerra",
+    description: "Escolhe recuar 1 casa ou todos recuarem 2 casas",
+    type: "war",
   },
   6: {
-    name: 'Aquecimento Global',
-    description: 'Escolhe permanecer e o jogador mais recuado avançar 1 casa ou escolhe avançar 1 casa',
-    type: 'global_warming'
+    name: "Aquecimento Global",
+    description:
+      "Escolhe permanecer e o jogador mais recuado avançar 1 casa ou escolhe avançar 1 casa",
+    type: "global_warming",
   },
   10: {
-    name: 'Corrupção',
-    description: 'Escolhe outro jogador para avançarem mais 1 casa ou permanecerem',
-    type: 'corruption'
+    name: "Corrupção",
+    description:
+      "Escolhe outro jogador para avançarem mais 1 casa ou permanecerem",
+    type: "corruption",
   },
   14: {
-    name: 'Crise',
-    description: 'O jogador mais avançado escolhe recuar ou permitir que o mais recuado avance 1 casa',
-    type: 'crisis'
+    name: "Crise",
+    description:
+      "O jogador mais avançado escolhe recuar ou permitir que o mais recuado avance 1 casa",
+    type: "crisis",
   },
   18: {
-    name: 'Fascismo',
-    description: 'Escolhe avançar 1 casa e os outros recuarem 1 casa ou permanecer',
-    type: 'fascism'
-  }
+    name: "Fascismo",
+    description:
+      "Escolhe avançar 1 casa e os outros recuarem 1 casa ou permanecer",
+    type: "fascism",
+  },
 };
 
 function createSpiralBoard() {
@@ -391,15 +407,35 @@ function createSpiralBoard() {
 
   // Definir cores dos anéis do exterior (21) ao interior (1) baseado na sua imagem
   const ringColors = [
-    "#1f4e79", "#ffffff", "#4472a8", "#ffffff", "#7ba3d1", "#ffffff", "#b8d1ed", "#ffffff",
-    "#8e44ad", "#ffffff", "#af7ac5", "#ffffff", "#e8b4cb", "#ffffff", "#f06292", "#ffffff",
-    "#ff9800", "#ffffff", "#ffcc80", "#ffffff", "#4caf50" // Anel central
+    "#1f4e79",
+    "#ffffff",
+    "#4472a8",
+    "#ffffff",
+    "#7ba3d1",
+    "#ffffff",
+    "#b8d1ed",
+    "#ffffff",
+    "#8e44ad",
+    "#ffffff",
+    "#af7ac5",
+    "#ffffff",
+    "#e8b4cb",
+    "#ffffff",
+    "#f06292",
+    "#ffffff",
+    "#ff9800",
+    "#ffffff",
+    "#ffcc80",
+    "#ffffff",
+    "#4caf50", // Anel central
   ];
 
   // Criar anéis do exterior (21) ao interior (1)
   for (let ring = 21; ring >= 1; ring--) {
     const ringElement = document.createElement("div");
-    ringElement.className = `ring ${newEventRings.includes(ring) ? "event-ring" : ""}`;
+    ringElement.className = `ring ${
+      newEventRings.includes(ring) ? "event-ring" : ""
+    }`;
     ringElement.id = `ring-${ring}`;
 
     const radius = (ring / 21) * (boardSize / 2 - 20);
@@ -418,7 +454,7 @@ function createSpiralBoard() {
     board.appendChild(ringElement);
 
     // Add event icons if level is advanced and this ring has an event
-    if (gameState.gameLevel === 'advanced' && eventData[ring]) {
+    if (gameState.gameLevel === "advanced" && eventData[ring]) {
       addEventIconToRing(ring, eventData[ring]);
     }
   }
@@ -554,7 +590,9 @@ function updatePlayerDecisionDisplay() {
                     <div style="font-size: 20px;">
                         ${
                           decision
-                            ? decision.direction === "forward"
+                            ? decision.cardSteps === 0
+                              ? "⏸️" // Show pause emoji for stay
+                              : decision.direction === "forward"
                               ? "⬆️"
                               : "⬇️"
                             : "⏳"

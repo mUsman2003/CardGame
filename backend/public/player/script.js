@@ -21,7 +21,7 @@ const IDENTITY_PAWNS = [
   { id: "black_woman", icon: "👩🏿", label: "Mulher Negra", color: "#e67e22" },
   { id: "lgbtiqa", icon: "🏳️‍🌈", label: "LGBTIQA+", color: "#f39c12" },
   { id: "blind", icon: "🦯", label: "Pessoa Cega", color: "#16a085" },
-  { id: "deaf", icon: "🤟", label: "Pessoa Surda", color: "#2980b9" },
+  { id: "deaf", icon: "👂", label: "Pessoa Surda", color: "#2980b9" },
   {
     id: "disabled",
     icon: "♿",
@@ -183,9 +183,19 @@ function checkForRoomCodeInURL() {
 function makeVote(direction) {
   if (gameState.hasVoted) return;
 
+  // Get the actual button text to determine if it's a stay action
+  const isStay =
+    direction === "forward"
+      ? moveForwardBtn.textContent.includes("Permanecer")
+      : moveBackwardBtn.textContent.includes("Permanecer");
+
   const vote = {
     direction: direction,
-    description: direction === "forward" ? "Avançar" : "Recuar",
+    description: isStay
+      ? "Permanecer"
+      : direction === "forward"
+      ? "Avançar"
+      : "Recuar",
   };
 
   socket.emit("player-vote", vote);
@@ -285,7 +295,12 @@ socket.on("card-drawn", (data) => {
   const card = data.card;
 
   console.log("Card data:", card); // Debug log
-  console.log("Forward steps:", card.forwardSteps, "Backward steps:", card.backwardSteps); // Debug log
+  console.log(
+    "Forward steps:",
+    card.forwardSteps,
+    "Backward steps:",
+    card.backwardSteps
+  ); // Debug log
 
   // Reset button states
   moveForwardBtn.disabled = false;
@@ -438,12 +453,14 @@ function updateOtherPlayersDisplay() {
       const playerElement = document.createElement("div");
       playerElement.className = "other-player";
       playerElement.innerHTML = `
-                        <div class="other-player-pawn">${pawn ? pawn.icon : "👤"
-        }</div>
+                        <div class="other-player-pawn">${
+                          pawn ? pawn.icon : "👤"
+                        }</div>
                         <div class="player-details">
                             <div class="player-name">${player.name}</div>
-                            <div class="player-position">Anel: ${player.position
-        }</div>
+                            <div class="player-position">Anel: ${
+                              player.position
+                            }</div>
                         </div>
                     `;
       otherPlayersList.appendChild(playerElement);
@@ -461,12 +478,14 @@ function updateOtherPlayersDisplay() {
       const playerElement = document.createElement("div");
       playerElement.className = "other-player";
       playerElement.innerHTML = `
-                        <div class="other-player-pawn">${pawn ? pawn.icon : "👤"
-        }</div>
+                        <div class="other-player-pawn">${
+                          pawn ? pawn.icon : "👤"
+                        }</div>
                         <div class="player-details">
                             <div class="player-name">${player.name}</div>
-                            <div class="player-position">Anel: ${player.position
-        }</div>
+                            <div class="player-position">Anel: ${
+                              player.position
+                            }</div>
                         </div>
                     `;
       gameOtherPlayersList.appendChild(playerElement);

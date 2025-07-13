@@ -151,7 +151,7 @@
             margin: 0 auto;
             background: radial-gradient(circle, #fff 0%, #f0f0f0 100%);
             border-radius: 50%;
-            border: 3px solid #333;
+            /* border: 3px solid #333; */
         }
 
         .ring {
@@ -456,3 +456,9 @@
       justify-content: center;   /* Center the two divs horizontally in the container */
       gap: 20px;                 /* Optional: space between divs */
         }
+        .event-icon-img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  pointer-events: none; /* Prevents dragging issues */
+}
