@@ -183,7 +183,6 @@ function checkForRoomCodeInURL() {
 function makeVote(direction) {
   if (gameState.hasVoted) return;
 
-  // Get the actual button text to determine if it's a stay action
   const isStay =
     direction === "forward"
       ? moveForwardBtn.textContent.includes("Permanecer")
@@ -200,42 +199,34 @@ function makeVote(direction) {
 
   socket.emit("player-vote", vote);
 
-  // Atualizar UI
+  // Update game state
   gameState.hasVoted = true;
   gameState.myVote = vote;
 
-  // Ocultar seção de votação, mostrar confirmação
-  votingSection.style.display = "none";
-  voteConfirmed.style.display = "block";
-  voteChoice.textContent = `Escolheste: ${vote.description}`;
-
-  // Desabilitar botões
-  moveForwardBtn.disabled = true;
-  moveBackwardBtn.disabled = true;
+  updateGameDisplay();
 }
-
 // Atualizar exibição baseado no estado do jogo
 function updateGameDisplay() {
   if (!gameState.gameStarted) return;
 
-  if (gameState.cardDrawn && !gameState.hasVoted) {
-    // Mostrar opções de votação
-    waitingForCard.style.display = "none";
-    votingSection.style.display = "block";
-    voteConfirmed.style.display = "none";
-    turnIndicator.textContent = "Carta sorteada - faz a tua escolha!";
-  } else if (gameState.hasVoted) {
-    // Mostrar confirmação de voto
-    waitingForCard.style.display = "none";
-    votingSection.style.display = "none";
-    voteConfirmed.style.display = "block";
-    turnIndicator.textContent = "Aguardando outros jogadores votarem...";
+  waitingForCard.style.display = "none";
+  votingSection.style.display = "none";
+  voteConfirmed.style.display = "none";
+
+  if (gameState.cardDrawn) {
+    if (!gameState.hasVoted) {
+      // Show voting options if card is drawn and player hasn't voted
+      votingSection.style.display = "block";
+      // turnIndicator.textContent = "Carta sorteada - faz a tua escolha!";
+    } else {
+      // Show waiting message if player has voted
+      voteConfirmed.style.display = "block";
+      // turnIndicator.textContent = "Aguardando outros jogadores votarem...";
+    }
   } else {
-    // Aguardando carta
+    // Show waiting for card if no card drawn
     waitingForCard.style.display = "block";
-    votingSection.style.display = "none";
-    voteConfirmed.style.display = "none";
-    turnIndicator.textContent = "Aguardando o anfitrião sortear uma carta...";
+    // turnIndicator.textContent = "Aguardando o anfitrião sortear uma carta...";
   }
 }
 
@@ -286,43 +277,43 @@ socket.on("game-started", (data) => {
 
 socket.on("card-drawn", (data) => {
   console.log("Card drawn event received:", data); // Debug log
+  if (!gameState.hasVoted) {
+    gameState.cardDrawn = true;
+    gameState.hasVoted = false;
+    gameState.myVote = null;
 
-  gameState.cardDrawn = true;
-  gameState.hasVoted = false;
-  gameState.myVote = null;
+    // Store card data for button text updates
+    const card = data.card;
 
-  // Store card data for button text updates
-  const card = data.card;
+    console.log("Card data:", card); // Debug log
+    console.log(
+      "Forward steps:",
+      card.forwardSteps,
+      "Backward steps:",
+      card.backwardSteps
+    ); // Debug log
 
-  console.log("Card data:", card); // Debug log
-  console.log(
-    "Forward steps:",
-    card.forwardSteps,
-    "Backward steps:",
-    card.backwardSteps
-  ); // Debug log
+    // Reset button states
+    moveForwardBtn.disabled = false;
+    moveBackwardBtn.disabled = false;
 
-  // Reset button states
-  moveForwardBtn.disabled = false;
-  moveBackwardBtn.disabled = false;
+    // Update button text based on card steps
+    if (card.forwardSteps === 0) {
+      moveForwardBtn.innerHTML = "⏸️ Permanecer";
+      console.log("Forward button set to Permanecer"); // Debug log
+    } else {
+      moveForwardBtn.innerHTML = "⬆️ Avançar";
+      console.log("Forward button set to Avançar"); // Debug log
+    }
 
-  // Update button text based on card steps
-  if (card.forwardSteps === 0) {
-    moveForwardBtn.innerHTML = "⏸️ Permanecer";
-    console.log("Forward button set to Permanecer"); // Debug log
-  } else {
-    moveForwardBtn.innerHTML = "⬆️ Avançar";
-    console.log("Forward button set to Avançar"); // Debug log
+    if (card.backwardSteps === 0) {
+      moveBackwardBtn.innerHTML = "⏸️ Permanecer";
+      console.log("Backward button set to Permanecer"); // Debug log
+    } else {
+      moveBackwardBtn.innerHTML = "⬇️ Recuar";
+      console.log("Backward button set to Recuar"); // Debug log
+    }
   }
-
-  if (card.backwardSteps === 0) {
-    moveBackwardBtn.innerHTML = "⏸️ Permanecer";
-    console.log("Backward button set to Permanecer"); // Debug log
-  } else {
-    moveBackwardBtn.innerHTML = "⬇️ Recuar";
-    console.log("Backward button set to Recuar"); // Debug log
-  }
-
   // Show voting options
   updateGameDisplay();
 });
@@ -344,6 +335,19 @@ socket.on("all-votes-received", (data) => {
 
 socket.on("game-ended", (data) => {
   showWinner(data.winner);
+  if (joinForm) {
+    joinForm.style.display = "none";
+  }
+  // Disable the join form if it's visible
+  if (joinForm.style.display !== "none") {
+    joinForm.style.display = "none";
+    statusMessage.textContent = "O jogo já terminou. Não é possível entrar.";
+    statusMessage.style.display = "block";
+  }
+  const enterGameButtons = document.querySelectorAll(".enter-game-button");
+  enterGameButtons.forEach((button) => {
+    button.style.display = "none";
+  });
 });
 
 socket.on("host-disconnected", () => {
@@ -440,59 +444,40 @@ function updateOtherPlayersDisplay() {
   const otherPlayers = gameState.players.filter(
     (p) => p.id !== gameState.playerData?.id
   );
-  document.getElementById("otherPlayerCount").textContent = otherPlayers.length;
-
-  // Atualizar lista da sala de espera
-  const otherPlayersList = document.getElementById("otherPlayersList");
-  if (otherPlayersList) {
-    otherPlayersList.innerHTML = "";
-    otherPlayers.forEach((player) => {
-      const pawn = IDENTITY_PAWNS.find(
-        (p) => p.id === player.pawnId || p.id === player.identity
-      );
-      const playerElement = document.createElement("div");
-      playerElement.className = "other-player";
-      playerElement.innerHTML = `
-                        <div class="other-player-pawn">${
-                          pawn ? pawn.icon : "👤"
-                        }</div>
-                        <div class="player-details">
-                            <div class="player-name">${player.name}</div>
-                            <div class="player-position">Anel: ${
-                              player.position
-                            }</div>
-                        </div>
-                    `;
-      otherPlayersList.appendChild(playerElement);
-    });
+  const playerCountElement = document.getElementById("otherPlayerCount");
+  if (playerCountElement) {
+    playerCountElement.textContent = otherPlayers.length;
   }
 
-  // Atualizar lista da visualização do jogo
-  const gameOtherPlayersList = document.getElementById("gameOtherPlayersList");
-  if (gameOtherPlayersList) {
-    gameOtherPlayersList.innerHTML = "";
-    otherPlayers.forEach((player) => {
-      const pawn = IDENTITY_PAWNS.find(
-        (p) => p.id === player.pawnId || p.id === player.identity
-      );
-      const playerElement = document.createElement("div");
-      playerElement.className = "other-player";
-      playerElement.innerHTML = `
-                        <div class="other-player-pawn">${
-                          pawn ? pawn.icon : "👤"
-                        }</div>
-                        <div class="player-details">
-                            <div class="player-name">${player.name}</div>
-                            <div class="player-position">Anel: ${
-                              player.position
-                            }</div>
-                        </div>
-                    `;
-      gameOtherPlayersList.appendChild(playerElement);
-    });
-  }
+  // Update both waiting room and game view lists
+  const updatePlayerList = (containerId) => {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    container.innerHTML = `
+      <div class="horizontal-players-container">
+        ${otherPlayers
+          .map((player) => {
+            const pawn = IDENTITY_PAWNS.find(
+              (p) => p.id === player.pawnId || p.id === player.identity
+            );
+            return `
+            <div class="player-info-box">
+              <div class="player-name">${player.name}</div>
+              <div class="player-icon">${player.icon}</div>
+              <div class="player-position">Anel: ${player.position}</div>
+            </div>
+          `;
+          })
+          .join("")}
+      </div>
+    `;
+  };
+
+  // Update both containers
+  updatePlayerList("otherPlayersList");
+  updatePlayerList("gameOtherPlayersList");
 }
-
 function updateDifficultyDisplay() {
   const difficultyBadge = document.getElementById("difficultyBadge");
   difficultyBadge.className = `difficulty-badge difficulty-${gameState.gameLevel}`;
@@ -527,6 +512,8 @@ function updateAvailablePawns(availablePawns) {
 function showWinner(winner) {
   const winnerText = document.getElementById("winnerText");
   const isWinner = winner.id === gameState.playerData?.id;
+  const joinForm = document.getElementById("joinForm");
+  if (joinForm) joinForm.style.display = "none";
 
   if (isWinner) {
     winnerText.innerHTML = `🎉 Foste o primeiro a chegar ao último anel! 🎉`;
@@ -536,8 +523,13 @@ function showWinner(winner) {
 
   gameActive.style.display = "none";
   winnerAnnouncement.style.display = "block";
-}
 
+  // Disable any rejoin attempts
+  joinBtn.disabled = true;
+  playerNameInput.disabled = true;
+  roomCodeInput.disabled = true;
+  pawnSelector.style.pointerEvents = "none";
+}
 function showEventChoices(event, choices) {
   // Ocultar outros elementos da UI
   votingSection.style.display = "none";

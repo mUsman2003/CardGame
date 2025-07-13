@@ -398,7 +398,44 @@
         .logo .text {
             color: #7cb342;
         }
+.players-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  justify-content: flex-start;
+}
 
+.player-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px;
+  min-width: 80px;
+  border-radius: 8px;
+  background: white;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.player-name {
+  font-weight: bold;
+  margin-bottom: 5px;
+  text-align: center;
+}
+
+.player-icon {
+  margin: 5px 0;
+}
+
+.player-position {
+  font-size: 0.9em;
+  color: #555;
+}
+
+.player-status {
+  font-size: 0.8em;
+  margin-top: 5px;
+  font-weight: bold;
+}
         @keyframes pulse {
             0% {
                 transform: scale(1);

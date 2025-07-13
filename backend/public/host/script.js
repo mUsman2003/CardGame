@@ -85,7 +85,13 @@ socket.on("game-started", (data) => {
   startGameBtn.style.display = "none";
 
   document.getElementById("gameLevel").disabled = true;
-
+  const qrCodeContainer = document.getElementById("qrCodeContainer");
+  const roomCodeDisplay = document.getElementById("roomCodeDisplay");
+  if (qrCodeContainer) qrCodeContainer.style.display = "none";
+  if (roomCodeDisplay) {
+    roomCodeDisplay.textContent = `Room Code: ${gameState.roomCode}`;
+    roomCodeDisplay.style.display = "block";
+  }
   // Recreate the spiral board to include event icons if advanced level
   createSpiralBoard();
 
@@ -197,28 +203,25 @@ function updatePlayersDisplay() {
     playerCard.className = "player-card";
     playerCard.style.borderLeftColor = player.color;
 
-    // Adicionar indicadores de status durante fase de decisão
+    // Status indicator for decision phase
     let statusHTML = "";
     if (gameState.phase === "decisions") {
       const hasDecided = gameState.playerDecisions[player.id] !== undefined;
       playerCard.classList.add(hasDecided ? "decided" : "waiting");
-      statusHTML = `<div style="padding: 5px; font-size: 12px; color: ${
+      statusHTML = `<div class="player-status" style="color:${
         hasDecided ? "#27ae60" : "#f39c12"
-      }; font-weight: bold;">
-                        ${
-                          hasDecided
-                            ? "✓ Voto Recebido"
-                            : "⏳ Aguardando Voto..."
-                        }
-                    </div>`;
+      }">
+                      ${hasDecided ? "✓ Decisões Registadas" : "⏳ Aguardando"}
+                  </div>`;
     }
 
     playerCard.innerHTML = `
-                    <div class="player-name">${player.name}</div>
-                    <div class="player-identity">${player.identityName} ${player.icon}</div>
-                    <div class="player-position">Anel: ${player.position}</div>
-                    ${statusHTML}
-                `;
+      <div class="player-name">${player.name}</div>
+      <div class="player-icon" style="font-size: 32px;">${player.icon}</div>
+      <div class="player-position">Anel: ${player.position}</div>
+      ${statusHTML}
+    `;
+
     playersGrid.appendChild(playerCard);
   });
 }

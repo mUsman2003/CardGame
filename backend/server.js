@@ -102,6 +102,7 @@ class GameRoom {
     this.currentCard = null; // Rastrear a carta atual
     this.playerDecisions = {}; // Rastrear decisões dos jogadores para a carta atual
     this.waitingForVotes = false; // Rastrear se estamos esperando votos dos jogadores
+    this.gameEnded = false;
   }
   // Add this new method to GameRoom class
   findPlayerByNameAndIdentity(playerName, playerIdentity) {
@@ -393,6 +394,9 @@ class GameRoom {
       cardDrawOrder: this.cardDrawOrder,
     };
   }
+  endGame(winner) {
+    this.gameEnded = true;
+  }
 }
 
 io.on("connection", (socket) => {
@@ -423,7 +427,11 @@ io.on("connection", (socket) => {
       socket.emit("join-error", "Sala não encontrada");
       return;
     }
-
+    if (room.gameEnded) {
+      // Add this check
+      socket.emit("join-error", "O jogo já terminou, não é possível entrar");
+      return;
+    }
     // Usar playerPawn.id se playerPawn for um objeto, caso contrário usar playerIdentity
     const identityId = playerPawn
       ? playerPawn.id || playerPawn
@@ -834,10 +842,8 @@ io.on("connection", (socket) => {
 
       // Se há um vencedor, terminar o jogo
       if (winner) {
+        room.endGame(winner); // Call endGame method
         io.to(roomId).emit("game-ended", { winner: winner });
-        console.log(
-          `Jogo terminou na sala ${roomId}. Vencedor: ${winner.name}`
-        );
       }
 
       // Resetar para próxima carta

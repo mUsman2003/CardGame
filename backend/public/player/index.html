@@ -12,18 +12,18 @@
 
 <body>
     <div class="container">
-        <div class="header">
+        <!-- <div class="header">
             <div class="logo">
                 <img src="logo.png" alt="Gual Logo" class="logo-image">
             </div>
             
-        </div>
+        </div> -->
 
         <div class="content">
             <!-- Formulário de Entrada no Jogo -->
             <div id="joinForm">
                 <div class="form-group">
-                    <label for="playerName">Seu Nome</label>
+                    <label for="playerName">Nome</label>
                     <input type="text" id="playerName" placeholder="Digite seu nome" maxlength="20">
                 </div>
 
@@ -34,7 +34,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Escolha a identidade com a qual você mais se identifica:</label>
+                    <label>Escolhe a identidade com a qual mais te identificas:</label>
                     <div id="pawnSelector" class="pawn-selector">
                         <!-- Peões serão preenchidos pelo JavaScript -->
                     </div>
@@ -95,22 +95,21 @@
                 </div>
 
                 <!-- Informação do Turno -->
-                <div id="turnIndicator" class="turn-indicator turn-waiting">
-                    Aguardando o anfitrião sortear uma carta...
-                </div>
+                <!-- <div id="turnIndicator" class="turn-indicator turn-waiting">
+                </div> -->
 
                 <div id="currentTurnInfo" class="current-turn-info" style="display: none;">
                     Turno atual: <span id="currentPlayerName"></span>
                 </div>
 
                 <!-- Aguardando Carta -->
-                <!-- <div id="waitingForCard" style="display: block;">
+                <div id="waitingForCard" style="display: block;">
                     <div
                         style="text-align: center; padding: 20px; background: #f8f9fa; border-radius: 8px; margin: 20px 0;">
                         <div style="font-size: 24px; margin-bottom: 10px;">⏳</div>
                         <div style="font-size: 18px; color: #666;">Aguardando o anfitrião sortear uma carta...</div>
                     </div>
-                </div> -->
+                </div>
 
                 <!-- Seção de Votação - APENAS Opções Avançar/Recuar -->
                 <div id="votingSection" style="display: none;">
@@ -176,8 +175,17 @@
                 <button class="button" onclick="location.reload()">Jogar Novamente</button>
             </div>
         </div>
+        <div>
+            <div class="game-footer">
+                <h1 class="game-title">#gual</h1>
+                <p class="game-subtitle">Created by Professor Manuel Da Cruz</p>
+            </div>
+        </div>
     </div>
+    
     <script src="script.js"></script>
 </body>
+
+
 
 </html>
