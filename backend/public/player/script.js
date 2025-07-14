@@ -525,7 +525,7 @@ function showWinner(winner) {
   winnerAnnouncement.style.display = "block";
 
   // Disable any rejoin attempts
-  joinBtn.disabled = true;
+  joinBtn.disabled = false;
   playerNameInput.disabled = true;
   roomCodeInput.disabled = true;
   pawnSelector.style.pointerEvents = "none";

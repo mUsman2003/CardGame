@@ -537,7 +537,7 @@ function updatePhaseDisplay() {
       break;
     case "decisions":
       cardDrawnDisplay.style.display = "block";
-      decisionPhase.style.display = "block";
+      decisionPhase.style.display = "none";
       currentPlayerStatus.textContent =
         "Carta retirada - aguardando a decisão de todos os jogadores";
       break;
