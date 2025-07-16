@@ -494,8 +494,8 @@
       gap: 20px;                 /* Optional: space between divs */
         }
         .event-icon-img {
-  width: 20px;
-  height: 20px;
+  width: 15px;
+  height: 15px;
   object-fit: contain;
   pointer-events: none; /* Prevents dragging issues */
 }

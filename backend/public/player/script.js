@@ -241,6 +241,9 @@ socket.on("joined-room", (data) => {
   gameState.roomCode = data.roomCode;
   gameState.gameLevel = data.gameLevel || "basic";
 
+  const roomenterbutton = document.getElementById("joinBtn");
+  roomenterbutton.style.display = "none";
+
   showStatus("Entrada no jogo bem-sucedida!", "success");
   joinForm.style.display = "none";
   waitingRoom.style.display = "block";
@@ -266,6 +269,8 @@ socket.on("game-started", (data) => {
   gameState.players = data.players;
   gameState.cardDrawn = false;
   gameState.hasVoted = false;
+  const roomenterbutton = document.getElementById("joinBtn");
+  roomenterbutton.style.display = "none";
 
   waitingRoom.style.display = "none";
   gameActive.style.display = "block";

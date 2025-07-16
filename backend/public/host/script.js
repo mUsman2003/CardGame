@@ -87,11 +87,13 @@ socket.on("game-started", (data) => {
   document.getElementById("gameLevel").disabled = true;
   const qrCodeContainer = document.getElementById("qrCodeContainer");
   const roomCodeDisplay = document.getElementById("roomCodeDisplay");
+  const roominfobutton = document.getElementById("room-setup");
   if (qrCodeContainer) qrCodeContainer.style.display = "none";
   if (roomCodeDisplay) {
-    roomCodeDisplay.textContent = `Room Code: ${gameState.roomCode}`;
-    roomCodeDisplay.style.display = "block";
+    // roomCodeDisplay.textContent = `Room Code: ${gameState.roomCode}`;
+    roomCodeDisplay.style.display = "none";
   }
+  roominfobutton.style.display = "none";
   // Recreate the spiral board to include event icons if advanced level
   createSpiralBoard();
 
@@ -280,33 +282,33 @@ const hardcodedPositions = {
     // Bottom
     { x: 290, y: 535 - 13 },
     // Left
-    { x: 45 + 13, y: 290 },
+    { x: 45 + 12, y: 290 },
     // Right
-    { x: 535 - 13, y: 290 },
+    { x: 535 - 12, y: 290 },
   ],
   14: [
     { x: 290, y: 97 + 13 },
     { x: 290, y: 483 - 13 },
-    { x: 97 + 13, y: 290 },
-    { x: 483 - 13, y: 290 },
+    { x: 97 + 12, y: 290 },
+    { x: 483 - 14, y: 290 },
   ],
   10: [
     { x: 290, y: 150 + 13 },
     { x: 290, y: 430 - 13 },
     { x: 150 + 13, y: 290 },
-    { x: 430 - 13, y: 290 },
+    { x: 430 - 14, y: 290 },
   ],
   6: [
     { x: 290, y: 203 + 13 },
     { x: 290, y: 377 - 13 },
     { x: 203 + 13, y: 290 },
-    { x: 377 - 13, y: 290 },
+    { x: 377 - 14, y: 290 },
   ],
   2: [
     { x: 290, y: 258 + 13 },
     { x: 290, y: 322 - 13 },
     { x: 256 + 13, y: 290 },
-    { x: 324 - 13, y: 290 },
+    { x: 324 - 14, y: 290 },
   ],
 };
 
