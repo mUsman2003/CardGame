@@ -245,7 +245,7 @@ function generateQRCode(roomCode) {
     return;
   }
 
-  const joinUrl = `https://cardgame-yh73.onrender.com/player/?room=${roomCode}`;
+  const joinUrl = `https://igual-experiencia-de-privilegios.onrender.com/player/?room=${roomCode}`;
 
   // Clear previous QR code
   qrCodeDiv.innerHTML = "";
